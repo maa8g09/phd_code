@@ -1,22 +1,29 @@
-mac = True
-
-import numpy as np
-from datetime import datetime
-import utils
-import read_construct as rc
-import utils_plots as up
-import resolvent_formulation as rf
-
 """
+RESOLVENT FORMULATION
+
 Resolvent formulation and projection code. This is the main routine that calls 
 all of the functions and files that perform the whole routine of generating 
 resolvent modes and then projecting them onto a channel flow solution.
 
-    Author:  Muhammad Arslan Ahmed
-     email:  maa8g09@soton.ac.uk
 
-University of Southampton
+Author details:
+    Muhammad Arslan Ahmed
+    maa8g09@soton.ac.uk
+    
+    Aerodynamics and Flight Mechanics Research Group
+    Faculty of Engineering and the Environment
+    University of Southampton
 """
+
+mac = True
+
+import numpy as np
+import utils as ut
+import read_construct as rc
+import utils_plots as up
+import resolvent_formulation as rf
+from datetime import datetime
+
 
 def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
     """
@@ -37,33 +44,44 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
     OUTPUTS:
         An ASCII file with th resolvent modes
     """
-    np.set_printoptions(precision=4)
-    
-    
+    ut.printStart()
+    np.set_printoptions(precision = 4)
+
     # Measure the amount of time it takes to execute this routine.
     startTime = datetime.now()
     
+    data = {}
+    modesOnly = False
     
-    # Read in the channelflow solution and store flowfield
-#    geo_variables, flow_field, vel_slice = rc.main_read_construct(directory, fourdarray, verbose)
-    # I am now goint to update the above code so that a dictionary is produced, 
-    # this way, only one variable is passed to functions and it can be extended
-    # to include whatever I may need ata later time.
-    data = rc.main_read_construct(directory, fourdarray, verbose)
-    
-    up.plot2D(vel_slice)
-    
+    if directory == '':
+        ut.printSectionHeader()
+        ut.printSectionTitle('We will be generating our own modes!')
+        modesOnly = True
+        
+    else:
+        ut.printSectionHeader()
+        ut.printSectionTitle('We will be reading in a channelflow solution')
+        
+        # Read in the channelflow solution and store flowfield
+        data = rc.main_read_construct(directory, fourdarray, verbose)
+        
+        if data['flowField']['is_physical'] == True:
+            up.plot2D(data['velslice'])
+
     # Resolvent Formulation
-    # If i want ot have random geometrical variables, I can not pass in flow_field.
-#    projected_solution = rf.main_resolvent_analysis(flow_field, geo_variables, fourdarray, N, Re, kx, kz, c, True)
-    rf.main_resolvent_analysis(data, fourdarray, N, Re, kx, kz, c, True)
-#    up.plot2D_modes(projected_solution)
+    rf.main_resolvent_analysis(data, fourdarray, N, Re, kx, kz, c, True, modesOnly)
+
     
-    utils.printSectionHeader()
-    utils.printSectionTitle('Calculation Time')
+    ut.printSectionHeader()
+    ut.printSectionTitle('Calculation Time')
     print '   ', datetime.now() - startTime, '\n'
 
     return
+
+
+
+
+
 
 
 if mac:

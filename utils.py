@@ -1,16 +1,41 @@
 """
 UTILITIES
 
-This file contains miscellaneous functions, which are used for small
-tasks such as printing errors. 
+This file contains miscellaneous functions, which are used for small tasks such 
+as printing errors, messages and checking input validity.
 
- Author: Muhammad Arslan Ahmed
-  email: maa8g09@soton.ac.uk
-  
-University of Southampton
+
+Author details:
+    Muhammad Arslan Ahmed
+    maa8g09@soton.ac.uk
+    
+    Aerodynamics and Flight Mechanics Research Group
+    Faculty of Engineering and the Environment
+    University of Southampton
 """
 
 import sys
+
+
+def printStart():
+    print '##################################################################'
+    print '_________ .__                                .__            '
+    print '\_   ___ \|  |__ _____    ____   ____   ____ |  |           '
+    print '/    \  \/|  |  \\__  \  /    \ /    \_/ __ \|  |           '
+    print '\     \___|   Y  \/ __ \|   |  \   |  \  ___/|  |__         '
+    print ' \______  /___|  (____  /___|  /___|  /\___  >____/         '
+    print '        \/     \/     \/     \/     \/     \/               '
+    print '    __________                    .__                      __   '
+    print '    \______   \ ____   __________ |  |___  __ ____   _____/  |_ '
+    print '     |       _// __ \ /  ___/  _ \|  |\  \/ // __ \ /    \   __\.'
+    print '     |    |   \  ___/ \___ (  <_> )  |_\   /\  ___/|   |  \  |  '
+    print '     |____|_  /\___  >____  >____/|____/\_/  \___  >___|  /__|  '
+    print '            \/     \/     \/                     \/     \/      '
+    print 'Muhammad Arslan Ahmed'
+    print 'University of Southampton'
+    print '##################################################################'
+    return
+
 
 def printSectionHeader():
     print '__________________________________________________________________\n'
@@ -28,13 +53,33 @@ def error(str):
     print '!!!!====!!!!====!!!!====!!!!====!!!!===='
     print 'ERROR:', str
     print '!!!!====!!!!====!!!!====!!!!====!!!!===='
+    print '\n\n\n'
+    print '  ______    ______   __       __  ________       '
+    print ' /      \  /      \ |  \     /  \|        \      '
+    print '|  $$$$$$\|  $$$$$$\| $$\   /  $$| $$$$$$$$      '
+    print '| $$ __\$$| $$__| $$| $$$\ /  $$$| $$__          '
+    print '| $$|    \| $$    $$| $$$$\  $$$$| $$  \         '
+    print '| $$ \$$$$| $$$$$$$$| $$\$$ $$ $$| $$$$$         '
+    print '| $$__| $$| $$  | $$| $$ \$$$| $$| $$_____       '
+    print ' \$$    $$| $$  | $$| $$  \$ | $$| $$     \      '
+    print '  \$$$$$$  \$$   \$$ \$$      \$$ \$$$$$$$$      '                          
+    print '                                                 '
+    print '  ______   __     __  ________  _______          '
+    print ' /      \ |  \   |  \|        \|       \         '
+    print '|  $$$$$$\| $$   | $$| $$$$$$$$| $$$$$$$\        '
+    print '| $$  | $$| $$   | $$| $$__    | $$__| $$        '
+    print '| $$  | $$ \$$\ /  $$| $$  \   | $$    $$        '
+    print '| $$  | $$  \$$\  $$ | $$$$$   | $$$$$$$\        '
+    print '| $$__/ $$   \$$ $$  | $$_____ | $$  | $$        '
+    print ' \$$    $$    \$$$   | $$     \| $$  | $$        '
+    print '  \$$$$$$      \$     \$$$$$$$$ \$$   \$$        '
     sys.exit('')
     return
     
     
 def message(str):
-    print '    Message:'
     print '   ', str, '\n'
+    return
 
 
 def openFile(str):
@@ -46,7 +91,7 @@ def openFile(str):
     """
     
     f = open(str, 'r')
-    print '\n    Opened the file:', str
+    message('Opened the file: ' + str)
     return f
     
 
@@ -75,13 +120,15 @@ def checkInputValidity(fourdarray, geom_variables):
     
     
     INPUTS:
-          fourdarray: the plane co-ordinates of data you want to plot
+        fourdarray: the plane co-ordinates of data you want to plot, indexed
+                      as (i, nx, ny, nz)
       geom_variables: a dictionary contianing all the geometrical values
       
     OUTPUTS:
-               -
                
     """
+    printSectionHeader()
+    printSectionTitle('Checking validity of 4D array input')
     
     for i in range(1,4):
         if fourdarray[i] != 'all':
@@ -102,35 +149,9 @@ def checkInputValidity(fourdarray, geom_variables):
                     error('Z point given exceeds the maximum grid points available')
     
     if fourdarray[0] < 0 or fourdarray[0] >= 3:
-        print 'Invalid velocity component given, velocity component must be in range 0 to 2.'
+        message('Invalid velocity component given, velocity component must be in range 0 to 2.')
         error('Invalid velocity component given!')
     
-    print '\n    The 4D array input is valid.'
+    message('The 4D array input is valid.')
     return
-    
-
-def sparsify(skip, array):
-    
-    # Sparsify to reduce number of elements in a 1D array.
-    #
-    # This function controls the resolution of the plot.
-    # The way it works is you pass in the array with a skip value.
-    #
-    # skip  = how many values to skip
-    # array = The array to process
-    #
-    # For example:
-    # array = [1,2,3,4,5,6,7,8]
-    # skip  = 1
-    # it becomes...
-    # array = [1,3,5,7]
-
-    tmp_array = []
-    for i in range(0, len(array)):
-        #print '',i,' i%(skip+1) = ',i%(skip+1)
-        if (i % (skip + 1)) is 0:
-            tmp_array.append(array[i])
-    print '\n\n', tmp_array, '\n\n'
-    
-    return tmp_array
     
