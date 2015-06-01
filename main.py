@@ -28,17 +28,19 @@ from datetime import datetime
 def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
     """
     INPUTS:
-      directory:  directory where the flow solution is kept (downloaded from channelflow.org),
-                  this is where the ASCII and GEOM files are kept.
-        verbose:  how verbose the output in the python shell should be, setting it to:
-                    - false: only essentials are output
-                    -  true: every detail is printed
-     fourdarray:  a 4D array used to plot slices from channel flow solutions
-              N:  resolution in y axis
-             Re:  Reynolds number
-             kx:  vector of streamwise wavenumbers
-             kz:  vector of spanwise wavenumbers
-              c:  phase speed
+     directory:  directory where the flow solution is kept (downloaded from 
+                 channelflow.org), this is where the ASCII and GEOM files are 
+                 kept.
+       verbose:  how verbose the output in the python shell should be, setting 
+                 it to:
+                   - false: only essentials are output
+                   - true: every detail is printed
+    fourdarray:  a 4D array used to plot slices from channel flow solutions
+             N:  resolution in y axis
+            Re:  Reynolds number
+            kx:  vector of streamwise wavenumbers
+            kz:  vector of spanwise wavenumbers
+             c:  phase speed
     
     
     OUTPUTS:
@@ -69,7 +71,7 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
             up.plot2D(data['velslice'])
 
     # Resolvent Formulation
-    rf.main_resolvent_analysis(data, fourdarray, N, Re, kx, kz, c, True, modesOnly)
+    generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
 
     
     ut.printSectionHeader()
@@ -77,6 +79,7 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
     print '   ', datetime.now() - startTime, '\n'
 
     return
+
 
 
 
@@ -97,12 +100,16 @@ else:
 #    direct = '/home/arslan/Documents/channelflow-1.4.2/solutions/equilibria/p47p18'
 
 
-n = 8
-re = 400
-kx = np.array([1])
-kz = np.array([0])
-U_centreline = 10
-c = np.linspace(0.01, 1.0, 1) * U_centreline
+
+
+
+direct = ''
+n = 10
+re = 500
+kx = np.arange(15)
+kz = np.arange(-3,4)
+U_centreline = 20
+c = np.linspace(0.12, 1.0, 50) * U_centreline
 
 
 v = True

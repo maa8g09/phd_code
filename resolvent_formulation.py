@@ -2,7 +2,7 @@ import tools_pseudospectral as ps
 import utils_plots as up
 import math
 import numpy as np
-import numpy.fft as fourier
+
 from scipy.linalg import inv
 from scipy.linalg import solve
 from scipy.linalg import pinv
@@ -21,59 +21,64 @@ from mpl_toolkits import mplot3d as axes3D
 np.set_printoptions(precision=4)
 
 
-def main_resolvent_analysis(flowfield, geom, frdary, N, Re, kx, kz, c, independent):
+def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     """
     The full resolvent formulation is given here, from the generation of the 
     modes to the projection of a channelflow solution onto the modes.
+
     
     INPUTS:
-       flowfield:  downloaded solution from channelflow.org
-          geom:  geometry variables of the channel flow solution read in
-        frdary:  a 4D array used to plot slices from channel flow solutions
              N:  resolution in y axis
             Re:  Reynolds number
             kx:  vector of streamwise wavenumbers
             kz:  vector of spanwise wavenumbers
              c:  phase speed
+     modesOnly:  boolean that controls whether or not to project modes onto a 
+                 solution
+          data:  a dictionary with all of the necassary flow field solutions in
+                 it classed by physical and spectral:
+                     The physical flow field is stored as a 4D array: 
+                      - (i, nx, ny, nz)
+                     The spectral flow field is stored as a 4D array:
+                      - (i, kx, ny, kz)
+    fourdarray:  a 1D array with 4 variables to use to plot projected solution
+
     
     OUTPUTS:
-         fourd:  projected solution / generated modes.
+
     """
-    independent = False
     
     
+    u_hat = 0
     
-    
-    
-    if independent:
+    if modesOnly:
         # Can use independent geometrical values
         x = np.arange(0.0, 2.0*math.pi, 0.1)
         z = np.arange(-2.0, 2.1, 0.1)
-        Lx = 4.0*math.pi
-        Lz = 2.0*math.pi
+        Lx = 4.0*math.pi #2 periods
+        Lz = 2.0*math.pi #1 period
         
         
     else:
         # Or can use channelflow geometry dimensions to generate resolvent modes
-        x = flowfield['X']
-        z = flowfield['Z']
-        N = geom['Ny'] + 2
-        Lx = geom['Lx']
-        Lz = geom['Lz']
-        kx = np.array([geom['alpha']])
-        kz = np.array([geom['gamma']])
+        if data['is_physical'] == True:
+            x = data['geometry']['physical']['x']
+            z = data['geometry']['physical']['z']
+            N = data['geometry']['physical']['Ny'] + 2
+            Lx = data['geometry']['physical']['Lx']
+            Lz = data['geometry']['physical']['Lz']
+            kx = np.array(data['geometry']['physical']['Nx'])
+            kz = np.array([data['geometry']['physical']['gamma']])
+            # Fourier transform the channelflow solution
+            u_hat = decompose_flow_field(flowfield, geom)
+        elif data['is_spectral'] == True:
+            u_hat = data['flowField']['spectral']
 
-
-
-    flowfield = np.random(random((geom['Nx'], geom['Ny'], geom['Nz'])))
-    
 
     t = 1  # run-time
     
-    
-    
     delta_c = np.abs(c[0] - c[1])
-    m = N-2 # m = number of modes generated.
+    m = N-2 # number of modes
     
     
     # Initialize an object array to store the generated modes for each
@@ -84,131 +89,123 @@ def main_resolvent_analysis(flowfield, geom, frdary, N, Re, kx, kz, c, independe
     # singular value per mode
     singular_value = np.zeros((len(kx), len(kz), len(c)))
     
-    
-    
     U = 0
     
-    # Fourier transform the channelflow solution
-    fourier_transformed_flow_field = decompose_flow_field(flowfield, geom)
-    scalars = np.zeros((len(kx), 3.0*m, len(kz)))
     
+    # Scalars
+    scalars = np.ones((len(x), 3.0*m, len(z)))
+    #scalars = np.zeros((len(kx), 3.0*m, len(kz)))
     
     
     for i_kx in range(0, len(kx)):
         for i_kz in range(0, len(kz)):
+            
+            # account for kx = kz = 0 (turbulent mean)
+            if kx[i_kx] == 0 or kz[i_kz] == 0:
+                continue
+            
+            
+            C, A, C_adjoint_2, clencurt_quad, y = get_resolvent_operator(N, Re,
+                                                                         Lx, Lz,
+                                                                         kx[i_kx],
+                                                                         kz[i_kz])
+                                                                 
             for i_c in range(0, len(c)):
-                omega = kx[i_kx] * c[i_c]
-
-                # account for kx = kz = 0 (turbulent mean)
-                if kx[i_kx] == 0 or kz[i_kz] == 0:
-                    continue
-                
-                resolvent, clencurt_quad, y = get_resolvent_operator(N, 
-                                                                     Re, 
-                                                                     geom, 
-                                                                     kx[i_kx], 
-                                                                     kz[i_kz], 
-                                                                     omega)
-                
-                # Perform SVD on the resolvent to get the forcing, singluar and
-                # response modes. This also gives the flow field in spectral 
-                # space.
-                U_spectral, sigma, V_spectral = svd(resolvent)
-                
-
-                if independent:
-                    scalars = np.ones((len(x), 3.0*m, len(z)))
-                else:
-                    scalars = get_scalars(fourier_transformed_flow_field, geom, frdary, U_spectral, clencurt_quad)
-                    
-                    
-                # Solve linear equation to get the physical velocities in
-                # streamwise and wall-normal directions. 
-                u_physical = solve(clencurt_quad.T, U_spectral)
-                
-                # Store the generated modes and the first singular value 
-                # (to be used below)
-                mode[:, i_kx, i_kz, i_c] = np.asarray(np.squeeze(u_physical[:,0]))
-                singular_value[i_kx, i_kz, i_c] = sigma[0]
-                
-                # Conver the flow field to physical space.
-                phys_flow_field = fourier_to_physical(u_physical[:, 0],
-                                                     kx[i_kx],
-                                                     kz[i_kz],
-                                                     c[i_c],
-                                                     x, z, t,
-                                                     Lx,
-                                                     Lz)
-                
-                # generated flow field is the velocity vector U 
-                # which contains (u,v,w)
-                U = U + (scalars * sigma[0] * delta_c * phys_flow_field) # multiplied by a weighting coefficient, these are the scalras I get from the projcetion shit I gtta do.
                 print 'kx:',kx[i_kx],'    kz:',kz[i_kz],'    c:',c[i_c]
                 
+                omega = kx[i_kx] * c[i_c]
 
 
 
+                # The resolvent of A
+                resolvent_operator = inv(-1j*omega*np.eye(m*2) - A)
+
+                # Transfer Function
+                transfer_function = C * resolvent_operator * C_adjoint_2
+                
+                # Perform SVD on the resolvent operator to get the forcing, 
+                # singluar and response modes. This also gives a flow field 
+                # in spectral space.
+                #
+                # U_spectral: resolvent modes in fourier space
+                #      sigma: signular values
+                # V_spectral: forcing modes in fourier space
+                #
+                U_spectral, sigma, V_spectral = svd(transfer_function)
 
 
+                # Solve linear equation to get the physical velocities in
+                # streamwise direction.
+                #
+                #      Ax = b
+                #
+                #  A: clencurt_quad.T
+                #  x: resolvent modes
+                #  b: U_spectral
+                #
+                resolvent_modes = solve(clencurt_quad.T, U_spectral)
+                
+                
+                if not modesOnly:
+                    # now we get the scalars used to re-construct the flow field
+                    scalars = get_scalars(u_hat, resolvent_modes, clencurt_quad)
+                
+
+                # Store the generated modes and the first singular values
+                # for each wavenumber triplet.
+                mode[:, i_kx, i_kz, i_c] = np.squeeze(np.asarray(resolvent_modes[:, 0])) # take the first column of the resolvent modes
+                singular_value[i_kx, i_kz, i_c] = sigma[0]
 
 
-
-
-
-
-
-
-
-#    
-#    fig = plt.figure()
-#    
-#    ims = []
-#
-#    Ut = np.zeros((3.0*m, len(z)), dtype=np.complex128)
-#    
-#    for time in range(0, t):
-#        time = time# * 0.1
-#        Ut = Ut * 0.0
-#        print '\n\n\n\n\n\n\n====================================Time is:',time
-#        for i in range(0, len(kx)):
-#            for j in range(0, len(kz)):
-#                for q in range(0, len(c)):
-#                    
-#                    if kx[i] == 0 or kz[j] == 0:
-#                        continue
-#
-#                    transformed_ff_t = fourier_to_physical(mode[:, i, j, q], kx[i], kz[j], c[q], [frdary[1]], z, time, Lx, Lz)
-#                    a = singular_value[i,j,q]
-#                    b = transformed_ff_t[0,:,:]
-#                    e = scalars[frdary[1],:,:]
-#                    Ut = Ut + a * delta_c * e * b
-#                    print 'kx:',kx[i_kx],'    kz:',kz[i_kz],'    c:',c[i_c]
-#    
-#    Ut = Ut.real
-#    u = Ut[0:m,:]
-#    v = Ut[m:2*m,:]
-#    w = Ut[2*m:3*m,:]
-#    
-#    fourd = {'X': x, 'Y': y, 'Z': z, 'U': u, 'V': v, 'W': w}
-#        
-    fourd = 0
+                # Convert the response modes to physical space to be used to 
+                # generate a physical flowfield.
+                #
+                # ifft
+                fou_field = resolvent_modes[:, 0] # take the first column of the resolvent modes matrix
+                phys_flow_field_0   = ifft(resolvent_modes[:, 0],
+                                         kx[i_kx], kz[i_kz], c[i_c], np.array([0]), z, t, Lx, Lz, omega)
+                                         
+                phys_flow_field   = ifft(resolvent_modes[:, 0],
+                                         kx[i_kx], kz[i_kz], c[i_c],x, z, t, Lx, Lz, omega)
+                
+                # Generated flow field is the velocity vector U
+                # which contains (u,v,w)
+#                U += (sigma[0] * scalars[0,:,:] * phys_flow_field[0,:,:])
+              
+                # Generated flow field
+                U += (scalars * sigma[0] * delta_c * phys_flow_field)
+                
+    generated_flowField = {}
+    generated_flowField['resolvent_flowField'] = U
+    generated_flowField['U'] = U[0,:,:]
     
-    return fourd
+    
+    
+    data['resolvent_flowField'] = U
+    
+    return U
 
 
-def get_resolvent_operator(N, Re, geo_var, alpha, beta, omega):
+def get_resolvent_operator(N, Re, Lx, Lz, alpha, beta):
     """
+    We are calculating the resolvent operator in this function. The methodology
+    followed here is given in the following reference in the "Formulation" 
+    section, "Moarreff, 2013, Model-based scaling of ..."
+    
+    
     INPUTS:
              N:  the number of grid points in the y-axis.
             Re:  Reynolds number
+            
      
     OUTPUTS:
              H:  the resolvent operator
              W:  ClenCurt matrix (Clenshaw-Curtis quadrature)
     """
-    # 
-    alpha = alpha * (2.0 * math.pi) / geo_var['Lx']
-    beta = beta * (2.0 * math.pi) / geo_var['Lz']
+    
+    
+    alpha = alpha * (2.0 * math.pi) / Lx
+    beta = beta * (2.0 * math.pi) / Lz
     
     
     # We need to get the boundary conditions before we can get the modes
@@ -288,49 +285,47 @@ def get_resolvent_operator(N, Re, geo_var, alpha, beta, omega):
     # Adjoint of C maps the forcing vector to the state vector. 
     C_adjoint_2 = pinv(C)
     
-    # The resolvent of A
-    RA = inv(-1j*omega*np.eye(m*2) - A)
-
-    # Transfer Function
-    H = C * RA * C_adjoint_2
     
-    return H, W, y
+    return C, A, C_adjoint_2, W, y
     
         
     
     
-def fourier_to_physical(u_hat, kx, kz, c, x, z, t, Lx, Lz):
+def ifft(fft_signal, kx, kz, c, x, z, t, Lx, Lz, omega):
     """
     INPUTS:
-      u_hat  : Fourier mode vector (u, v, w), fourier coeffs
-         kx  : wavenumber in x direction
-         kz  : wavenumber in z direction
-      omega  : temporal frequency
-          x  : streamwise vector
-          z  : spanwise vector
-          t  : time instant to probe
-         Lx  : length of channel
-         Lz  : width of channel
-    
+ fft_signal : fourier signal
+         kx : wavenumber in x direction
+         kz : wavenumber in z direction
+          c : temporal frequency
+          x : streamwise vector
+          z : spanwise vector
+          t : time instant to probe
+         Lx : length of channel
+         Lz : width of channel
+
     OUTPUT:
-          U  : physical flowfield
-          
+     signal : spectral signal
     """
     
-    omega = kx * c
+    kx *= (2.0 * math.pi) / Lx
+    kz *= (2.0 * math.pi) / Lz
     
-    # initialize flow field with zeros
-    U = np.zeros((len(x), u_hat.shape[0], len(z)))
     
-    for k in range(0, len(z)):
-        for i in range(0, len(x)):
-            a = (kx * 2.0*math.pi/Lx * x[i])
-            b = (kz * 2.0*math.pi/Lz * z[k])
-            c = (omega*t)
-            expo = np.exp(1j*(a + b - c))
-            U[i, :, k] = np.asarray(np.squeeze(u_hat)) * expo
+    signal = np.zeros((len(x), len(fft_signal), len(z)), dtype=np.complex128)
     
-    return U
+    
+    for i_z in range(0, z.shape[0]):
+        for i_x in range(0, x.shape[0]):
+            exp_component = np.exp(1j * ((kx * x[i_x]) + (kz * z[i_z]) - (omega * t)))
+            a = fft_signal[:, :]
+            b = a * exp_component
+            b = np.squeeze(b)
+            signal[i_x, :, i_z] = b
+            
+    
+    return signal
+
     
 
 
