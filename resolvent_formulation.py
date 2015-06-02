@@ -68,7 +68,25 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
         
     else:
         # Or can use channelflow geometry dimensions to generate resolvent modes
-        if data['is_physical'] == True:
+        if data['flowField']['is_spectral'] == True:
+            u_hat = data['flowField']['spectral']
+            u_hat = np.concatenate((u_hat[0,:,:,:],
+                                    u_hat[1,:,:,:],
+                                    u_hat[2,:,:,:]), 
+                                    axis=1)
+            
+            Nx = data['geometry']['spectral']['kx']
+            N = data['geometry']['spectral']['Ny'] + 2
+            Nz = data['geometry']['spectral']['kz']*2 - 2
+            Lx = data['geometry']['physical']['Lx']
+            Lz = data['geometry']['physical']['Lz']
+            x = data['geometry']['physical']['x']
+            z = data['geometry']['physical']['z']
+            kx = np.arange(-0.5*Nx + 1, 0.5*Nx + 1)
+            kz = np.arange(data['geometry']['spectral']['kz'])
+            
+            
+        elif data['flowField']['is_physical'] == True:
             x = data['geometry']['physical']['x']
             z = data['geometry']['physical']['z']
             Nx = data['geometry']['physical']['Nx']
@@ -76,23 +94,19 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             N = data['geometry']['physical']['Ny'] + 2
             Lx = data['geometry']['physical']['Lx']
             Lz = data['geometry']['physical']['Lz']
-            kx = np.array(data['geometry']['physical']['Nx'])
-            kz = np.array(0.5*[data['geometry']['physical']['Nz']] + 1)
-            # Fourier transform the channelflow solution
-            u_hat = fft(data)
+            kx = np.arange(Nx)
+            kz = np.arange(-0.5*Nz, 0.5*Nz + 1)
             
-        elif data['is_spectral'] == True:
-            u_hat = data['flowField']['spectral']
-            u_hat = np.concatenate((u_hat[0,:,:,:],
-                                    u_hat[1,:,:,:],
-                                    u_hat[2,:,:,:]), 
-                                    axis=1)
+            # Fourier transform the channelflow solution
+            u_hat = fft_flowField(data)
+            
+        
 
 
     t = 1  # run-time
     
     delta_c = np.abs(c[0] - c[1])
-    m = N-2 # number of modes
+    m = N - 2 # number of modes
     
     
     # Initialize an object array to store the generated modes for each
@@ -107,8 +121,12 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     
     
     # Scalars
-    scalars = np.ones((Nx, 3.0*N, Nz)
-    #scalars = np.zeros((len(kx), 3.0*m, len(kz)))
+    if not modesOnly:
+        if data['flowField']['is_spectral']:
+            scalars = np.zeros((len(kx), 3.0*m, len(kz)), dtype=np.complex128)
+            
+    elif modesOnly:
+        scalars = np.ones((len(x), 3.0*m, len(z)), dtype=np.complex128)
     
     
     for i_kx in range(0, len(kx)):
@@ -118,7 +136,6 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             if kx[i_kx] == 0 or kz[i_kz] == 0:
                 continue
             
-            
             C, C_adjoint_2, A, clencurt_quad, y = get_state_vectors(N, Re,
                                                                          Lx, Lz,
                                                                          kx[i_kx],
@@ -126,16 +143,19 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                                                                  
             for i_c in range(0, len(c)):
                 print 'kx:',kx[i_kx],'    kz:',kz[i_kz],'    c:',c[i_c]
-                
-                omega = kx[i_kx] * c[i_c]
 
+                
+                # Phase speed
+                omega = kx[i_kx] * c[i_c]
 
 
                 # The resolvent of A
                 resolvent_operator = inv(-1j*omega*np.eye(m*2) - A)
 
+
                 # Transfer Function
                 transfer_function = C * resolvent_operator * C_adjoint_2
+                
                 
                 # Perform SVD on the resolvent operator to get the forcing, 
                 # singluar and response modes. This also gives a flow field 
@@ -146,7 +166,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                 # V_spectral: forcing modes in fourier space
                 #
                 U_spectral, sigma, V_spectral = svd(transfer_function)
-
+                
 
                 # Solve linear equation to get the physical velocities in
                 # streamwise direction.
@@ -164,6 +184,11 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                     # now we get the scalars used to re-construct the flow field
                     tmp_scalar = get_scalars(u_hat[i_kx, :, i_kz], resolvent_modes, clencurt_quad)
                     scalars[i_kx, :, i_kz] = tmp_scalar
+                    sc_tmp = np.delete(scalars, (0), axis=2)
+                    mirroredSc = sc_tmp[:,:,::-1]
+                    doublesSc = np.concatenate((mirroredSc, sc_tmp), axis=2)
+                    scaShape = doublesSc.shape
+
 
                 # Store the generated modes and the first singular values
                 # for each wavenumber triplet.
@@ -182,22 +207,34 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                 phys_flow_field   = ifft(resolvent_modes[:, 0],
                                          kx[i_kx], kz[i_kz], c[i_c],x, z, t, Lx, Lz, omega)
                 
+                
                 # Generated flow field is the velocity vector U
                 # which contains (u,v,w)
 #                U += (sigma[0] * scalars[0,:,:] * phys_flow_field[0,:,:])
               
+              
                 # Generated flow field
-                U += (scalars * sigma[0] * delta_c * phys_flow_field)
+                if modesOnly:
+                    U += (scalars * sigma[0] * delta_c * phys_flow_field)
+                else:
+                    U += (doublesSc * sigma[0] * delta_c * phys_flow_field)
+
                 
     generated_flowField = {}
-    generated_flowField['resolvent_flowField'] = U
-    generated_flowField['U'] = U[0,:,:]
-    
-    
-    
+    generated_flowField['resolvent_flowField'] = U.real
+    generated_flowField['U'] = U[:,   0:m   ,:].real
+    generated_flowField['V'] = U[:,   m:2*m ,:].real
+    generated_flowField['W'] = U[:, 2*m:3*m ,:].real
+    generated_flowField['X'] = x
+    generated_flowField['Y'] = y
+    generated_flowField['Z'] = z
+    generated_flowField['Nx'] = Nx
+    generated_flowField['Ny'] = m
+    generated_flowField['Nz'] = Nz
+        
     data['resolvent_flowField'] = U
     
-    return U
+    return generated_flowField
 
 
 def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
@@ -339,7 +376,7 @@ def ifft(fft_signal, kx, kz, c, x, z, t, Lx, Lz, omega):
     for i_z in range(0, z.shape[0]):
         for i_x in range(0, x.shape[0]):
             exp_component = np.exp(1j * ((kx * x[i_x]) + (kz * z[i_z]) - (omega * t)))
-            a = fft_signal[:, :]
+            a = fft_signal[:]
             b = a * exp_component
             b = np.squeeze(b)
             signal[i_x, :, i_z] = b
@@ -400,7 +437,10 @@ def fft(signal, kx, kz, c, x, z, t, Lx, Lz):
     fft_signal2 = fft_signal[0,:,0] # just for testing.
     
     return fft_signal2
+
+def fft_flowField(data):
     
+    return data
     
 
 def get_scalars(u_hat, resolvent_modes, clencurt_quad):
@@ -410,16 +450,18 @@ def get_scalars(u_hat, resolvent_modes, clencurt_quad):
     
     clencurt_quad = np.asmatrix(clencurt_quad)
 
-    u_hat = np.asmatrix(u_hat)
-
     scalars = np.zeros((u_hat.shape), dtype=np.complex128) # (3*Ny)
     
+    u_hat = np.asmatrix(u_hat)
+
     
-    for i in range(0, u_hat.shape[0]): # from 0 to 3*Ny - 1
-        resolvent_modes_col = np.asmatrix(resolvent_modes_star[:,i]).T # column of resolvent modes
+    
+    for i in range(0, u_hat.shape[1]): # from 0 to 3*Ny - 1
+        resolvent_modes_col = np.asmatrix(resolvent_modes_star[:,i]) # column of resolvent modes
         # Dimensions:
         #    1     =  1xN *     NxN     *       Nx1
-        scalars[i] = u_hat*clencurt_quad*resolvent_modes_col
+        tmp = u_hat * clencurt_quad * resolvent_modes_col
+        scalars[i] = tmp[0,0]
     
     a = scalars
 #    for i in range(0, scalars.shape[1]):

@@ -9,23 +9,16 @@ from matplotlib import animation
 from matplotlib import cm as cm
 from mpl_toolkits import mplot3d as axes3D
 
-def plot2D_modes(four_d):
-    # four_D is a dictionary which has the x, y, z co-ordinates and
-    # the flow field vector (U). 
-    # These values can then by used to plot contours and quiver plots
-#        fourd = {
-#                 'Y': y,
-#                 'Z': z,
-#                 'W': w,
-#                 'V': v,
-#                 'vel_data': u_mag
-#                 }
-#    Z = four_d['Z']
-    Z = len(four_d['Z'])
+def plot2D_modes(res_field, fourdarray):
+
+
+    Z = len(res_field['Z'])
     Z = np.arange(Z)
-#    Y = four_d['Y']
-    Y = len(four_d['Y'])
+
+
+    Y = len(res_field['Y'])
     Y = np.arange(Y)
+
     
     Z, Y = np.meshgrid(Z, Y)
     plane_image = plt.subplots(1,1)
@@ -38,10 +31,10 @@ def plot2D_modes(four_d):
                                
     plane_image = plt.quiver(Z,
                              Y,
-                             four_d['W'],
-                             four_d['V'])
+                             res_field['W'][0,:,:],
+                             res_field['V'][0,:,:])
                              
-    plane_image = plt.imshow(four_d['U'])
+    plane_image = plt.imshow(res_field['U'][0,:,:])
     plane_image.set_cmap('coolwarm')
     plt.colorbar()
     plt.xlabel('Z')

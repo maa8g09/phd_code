@@ -74,7 +74,7 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
 
     # Resolvent Formulation
     generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
-
+    up.plot2D_modes(generated_flowField, fourdarray)
     
     ut.printSectionHeader()
     ut.printSectionTitle('Calculation Time')
@@ -105,11 +105,11 @@ else:
 
 
 
-#direct = ''
-n = 10
-re = 500
-kx = np.arange(15)
-kz = np.arange(-3,4)
+direct = ''
+n = 35
+re = 400
+kx = np.arange(-15, 17)
+kz = np.arange(0, 17)
 U_centreline = 20
 c = np.linspace(0.12, 1.0, 50) * U_centreline
 
