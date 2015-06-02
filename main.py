@@ -45,7 +45,9 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
     
     OUTPUTS:
         An ASCII file with th resolvent modes
+        
     """
+    
     ut.printStart()
     np.set_printoptions(precision = 4)
 
@@ -103,7 +105,7 @@ else:
 
 
 
-direct = ''
+#direct = ''
 n = 10
 re = 500
 kx = np.arange(15)
