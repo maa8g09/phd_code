@@ -108,11 +108,11 @@ else:
 direct = ''
 n = 35
 re = 400
-kx = np.arange(-15, 17)
-kz = np.arange(0, 17)
-U_centreline = 20
-c = np.linspace(0.12, 1.0, 50) * U_centreline
-
+kx = np.arange(0, 7)
+kz = np.arange(-6,7)
+#U_centreline = 1
+#c = np.linspace(0.12, 1.0, 50) * U_centreline
+c = np.array([2.0 / 3.0])
 
 v = True
 

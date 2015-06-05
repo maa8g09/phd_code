@@ -105,7 +105,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
 
     t = 1  # run-time
     
-    delta_c = np.abs(c[0] - c[1])
+    if len(c) >= 2:
+        delta_c = np.abs(c[0] - c[1])
+    else:
+        delta_c = 1.0
     m = N - 2 # number of modes
     
     
