@@ -334,12 +334,12 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     return gen_ff
 
 
-def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
+def get_state_vectors(N, Re, Lx, Lz, kx, kz):
     """
     We are calculating the state vectors in this function. The methodology
     followed here is given in the following reference in the "Formulation" 
-    section (2. Low-rank approximation to channel flow), Moarreff, 2013, 
-    Model-based scaling of the streamwise energy density.
+    section (2. Low-rank approximation to channel flow), 
+    Moarreff, 2013, Model-based scaling of the streamwise energy density.
     
     
     INPUTS:
@@ -347,8 +347,8 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
             Re:  Reynolds number
             Lx:  length of solution box
             Lz:  width of solution box
-         alpha:  streamwise wavenumber
-          beta:  spanwise wavenumber
+            kx:  streamwise wavenumber
+            kz:  spanwise wavenumber
             
      
     OUTPUTS:
@@ -360,13 +360,13 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
     """
     
     
-    alpha = alpha * (2.0 * math.pi) / Lx
-    beta = beta * (2.0 * math.pi) / Lz
+    kx = kx * (2.0 * math.pi) / Lx
+    kz = kz * (2.0 * math.pi) / Lz
     
     
-    # We need to get the boundary conditions before we can get the modes
-    # for this we use ChebDiff.
-    x, DM = ps.chebdiff(N, 2, False)
+    # Calculate the differentiation matrix for the number of y-co-ordinates we
+    # have (N)
+    x, DM = ps.chebdiff(N, 2)
 
     
     # Second derivative matrix
@@ -382,7 +382,7 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
     
     # For the Orr-Sommerfeld equations we need to calculate the derivates
     #          D = partial_dy
-    #  del_hat_2 = D**2.0 - K**2.0, where K**2.0 = alpha**2.0 + beta**2.0
+    #  del_hat_2 = D**2.0 - K**2.0, where K**2.0 = kx**2.0 + kz**2.0
     #       dUdy = first derivative of Uo(y)
     #      dU2dy = second derivative of Uo(y)
     #          f = time derivative.
@@ -393,7 +393,7 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
     
     I = np.eye(m)
     Z = np.zeros(shape=(m, m))
-    K2 = alpha**2.0 + beta**2.0
+    K2 = kx**2.0 + kz**2.0
 
     del_hat_2 = D2 - K2*I
     del_hat_4 = D4 - 2.0*D2*K2 + K2*K2*I
@@ -401,18 +401,17 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
 
     U = np.identity(m) # Mean flow Uo(y), 1 at centreline
     np.fill_diagonal(U, 1 - y_c**2.0)
-#    up.plotMatrix(U)
     dU_dy  = np.identity(m)
+    
     np.fill_diagonal(dU_dy, -2.0*y_c)
-#    up.plotMatrix(dU_dy)
     dU2_dy = -2.0
 
 
     # pg 60 Schmid Henningson eq3.29 and 3.30
     # -1j*M + L = 0
-    OS_operator = ((1.0 / Re) * del_hat_4) + (1j * alpha * dU2_dy * I) - (1j * alpha * U * del_hat_2)
-    SQ_operator = ((1.0 / Re) * del_hat_2) - (1j * alpha * U)
-    C_operator  = -1.0j * beta * dU_dy
+    OS_operator = ((1.0 / Re) * del_hat_4) + (1j * kx * dU2_dy * I) - (1j * kx * U * del_hat_2)
+    SQ_operator = ((1.0 / Re) * del_hat_2) - (1j * kx * U)
+    C_operator  = -1.0j * kz * dU_dy
 
 
     # Moarreff (2013) - Model-based scaling of the streamwise energy density
@@ -423,9 +422,9 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
 
  
     # C maps state vector to the velocity vector
-    C = np.vstack((np.hstack((( 1j / K2) * (alpha * D1), (-1j / K2) *  (beta * I))), 
+    C = np.vstack((np.hstack((( 1j / K2) * (kx * D1), (-1j / K2) *  (kz * I))), 
                    np.hstack((                        I,                       Z)), 
-                   np.hstack(( ( 1j / K2) * (beta * D1), ( 1j / K2) * (alpha * I)))))
+                   np.hstack(( ( 1j / K2) * (kz * D1), ( 1j / K2) * (kx * I)))))
     
     C = np.asmatrix(C)
     
@@ -442,7 +441,6 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta):
     
     
     return C, C_adjoint_2, A, W, y_c
-    
         
     
     
