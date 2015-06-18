@@ -1,45 +1,226 @@
 import numpy as np
+import math
 import utils
 import read_construct as rc
 import utils_math as um
 
 from pylab import *
 from matplotlib import pyplot as plt
-from matplotlib import animation
+from matplotlib.ticker import FuncFormatter
+#from matplotlib import animation
 from matplotlib import cm as cm
 from mpl_toolkits import mplot3d as axes3D
 
-def plot2D_modes(res_field, fourdarray):
+def plot2D_modes(flowField, four_d_array, three_d):
+
+    quiver = True
+
+#    generated_flowField['U'] = U1_u
+#    generated_flowField['V'] = U1_v
+#    generated_flowField['W'] = U1_w
+#    generated_flowField['X'] = x
+#    generated_flowField['Y'] = y
+#    generated_flowField['Z'] = z
+#    generated_flowField['Nx'] = Nx
+#    generated_flowField['Ny'] = m
+#    generated_flowField['Nz'] = Nz
+#    generated_flowField['Nd'] = Nd
+#    generated_flowField['Lx'] = Lx
+#    generated_flowField['Lz'] = Lz
 
 
-    Z = len(res_field['Z'])
-    Z = np.arange(Z)
 
-
-    Y = len(res_field['Y'])
-    Y = np.arange(Y)
-
+    # depending on the fourdarray, we plot the following:
+    vel = 0
+    if four_d_array[0] == 0:
+        vel = flowField['U']
+        cbar_t = 'U velocity'
+    elif four_d_array[0] == 1:
+        vel = flowField['V']
+        cbar_t = 'V velocity'
+    elif four_d_array[0] == 2:
+        vel = flowField['W']
+        cbar_t = 'W velocity'
     
-    Z, Y = np.meshgrid(Z, Y)
-    plane_image = plt.subplots(1,1)
+    
+    
+        
+    quiv_3D_u = np.zeros((flowField['Ny'], flowField['Nx'], flowField['Nz']))
+    quiv_3D_v = np.zeros((flowField['Ny'], flowField['Nx'], flowField['Nz']))
+    quiv_3D_w = np.zeros((flowField['Ny'], flowField['Nx'], flowField['Nz']))
+    
+    
+    if four_d_array[1] != 'all': #ZY plane
+        axis_x = flowField['Z']
+        axis_x_t= 'Z'
+        axis_y = flowField['Y']
+        axis_y_t= 'Y'
+        axis_z = flowField['X']
+        axis_z_t= 'X'
+        
+        data_to_plot = vel[four_d_array[1],:,:]
 
-#    plane_image = plt.contourf(
-#                               Z, 
-#                               Y,
-#                               four_d['U']
-#                               )
-                               
-    plane_image = plt.quiver(Z,
-                             Y,
-                             res_field['W'][0,:,:],
-                             res_field['V'][0,:,:])
-                             
-    plane_image = plt.imshow(res_field['U'][0,:,:])
-    plane_image.set_cmap('coolwarm')
-    plt.colorbar()
-    plt.xlabel('Z')
-    plt.ylabel('Y')
-    plt.title('Resolvent Modes')
+        title = 'Generated flow field at X = ' + str(four_d_array[1])
+        
+        quiv_2D_u = flowField['W'][four_d_array[1], :, :]
+        quiv_2D_v = flowField['V'][four_d_array[1], :, :]
+        
+        quiv_3D_u[:, four_d_array[1], :] = quiv_2D_u
+        quiv_3D_v[:, four_d_array[1], :] = quiv_2D_v
+        quiv_3D_w[:, four_d_array[1], :] = flowField['U'][four_d_array[1], :, :]
+
+        
+    elif four_d_array[2] != 'all': # XZ plane
+        axis_x = flowField['X']
+        axis_x_t= 'X'
+        axis_y = flowField['Z']
+        axis_y_t= 'Z'
+        axis_z = flowField['Y']
+        axis_z_t= 'Y'
+        
+        data_to_plot = vel[:,four_d_array[2],:].T
+        
+        title = 'Generated flow field at Y = ' + str(four_d_array[2])
+        
+        quiv_2D_u = flowField['U'][:, four_d_array[2], :]
+        quiv_2D_v = flowField['W'][:, four_d_array[2], :]
+        
+        quiv_3D_u[four_d_array[2], :, :] = quiv_2D_u
+        quiv_3D_v[four_d_array[2], :, :] = quiv_2D_v
+        quiv_3D_w[four_d_array[2], :, :] = flowField['V'][:, four_d_array[2], :]
+        
+        
+        
+    elif four_d_array[3] != 'all': # XY plane
+        axis_x = flowField['X']
+        axis_x_t= 'X'
+        axis_y = flowField['Y']
+        axis_y_t= 'Y'
+        axis_z = flowField['Z']
+        axis_z_t= 'Z'
+        
+        data_to_plot = vel[:,:,four_d_array[3]].T
+        
+        title = 'Generated flow field at Z = ' + str(four_d_array[3])
+        
+        quiv_2D_u = flowField['U'][:, :, four_d_array[3]].T
+        quiv_2D_v = flowField['V'][:, :, four_d_array[3]].T
+        
+        quiv_3D_u[:, :, four_d_array[3]] = quiv_2D_u
+        quiv_3D_v[:, :, four_d_array[3]] = quiv_2D_v
+        quiv_3D_w[:, :, four_d_array[3]] = flowField['W'][:, :, four_d_array[3]].T
+        
+        
+    
+    
+    
+    three_d = False
+    
+    if three_d:
+        # 3D plot, subplot with 2D as well
+        
+        ################
+        # First subplot
+        ################
+        fig = plt.figure(figsize=plt.figaspect(.5))
+        fig.suptitle('2 subplots tutorial')
+        # "234" means "2x3 grid, 4th subplot".
+        plot1 = fig.add_subplot(1, 2, 1)
+        axis_meshg_x, axis_meshg_y = np.meshgrid(axis_x, axis_y)
+        origin = 'lower'
+        CS = plot1.contourf(axis_meshg_x, 
+                            axis_meshg_y, 
+                            data_to_plot, 
+                            32, 
+                            # levels 
+                            # [-1, -0.1, 0, 0.1], #alpha=0.5, 
+                            cmap=cm.coolwarm, 
+                            origin=origin)
+            
+        xticks = np.linspace(axis_x[0], axis_x[-1], 6)
+        yticks = np.linspace(axis_y[0], axis_y[-1], 8)
+        
+        plot1.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v)
+        plot1.set_xlabel(axis_x_t)
+        plot1.set_ylabel(axis_y_t)
+        plot1.set_xticks(xticks)#, fontsize = 15)
+        plot1.set_yticks(yticks)#, fontsize = 15)
+        
+#        cbar = colorbar(CS)
+#        cbar.plot1.set_ylabel(cbar_t)
+        
+        
+        #################
+        # Second subplot
+        #################
+        plot2 = fig.add_subplot(1, 2, 2, projection='3d')
+        axis_3D_x, axis_3D_y, axis_3D_z = np.meshgrid(axis_x, axis_y, axis_z)
+        plot2.quiver3D(axis_3D_x,
+                       axis_3D_y,
+                       axis_3D_z,
+                       quiv_3D_u,
+                       quiv_3D_v,
+                       quiv_3D_w,
+                       )
+        
+#        plot2.contour3D(quiv_3D_u,
+#                        quiv_3D_v,
+#                        quiv_3D_w)
+        
+#        plot2.plot_surface(quiv_3D_u,
+#                            quiv_3D_v,
+#                            quiv_3D_w)
+        
+        plot2.set_xlabel(axis_x_t)
+        plot2.set_ylabel(axis_y_t)
+        
+        xticks = np.linspace(axis_x[0], axis_x[-1], 6)
+        yticks = np.linspace(axis_y[0], axis_y[-1], 8)
+        
+        
+        plot1.set_xlabel(axis_x_t)
+        plot1.set_ylabel(axis_y_t)
+        plot1.set_xticks(xticks)#, fontsize = 15)
+        plot1.set_yticks(yticks)#, fontsize = 15)
+        
+        
+    else: 
+        xticks = np.linspace(axis_x[0], axis_x[-1], 6)
+        yticks = np.linspace(axis_y[0], axis_y[-1], 8)
+    
+        axis_x, axis_y = np.meshgrid(axis_x, axis_y)
+        origin = 'lower'
+        CS = plt.contourf(axis_x, 
+                          axis_y, 
+                          data_to_plot, 
+                          100, # levels
+                          # [-1, -0.1, 0, 0.1], #alpha=0.5,
+                          cmap=cm.coolwarm,
+                          origin=origin)
+    
+    
+        if quiver:
+            # We will be plotting the quiver plots,
+            plt.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v, 
+                       angles='xy', scale_units='xy', scale=10)
+        
+    
+        plt.xlabel(axis_x_t)
+        plt.ylabel(axis_y_t)
+        
+        plt.title(title)
+        
+        cbar = plt.colorbar(CS)
+        cbar.ax.set_ylabel(cbar_t)
+        
+            
+        
+        plt.xticks(xticks)#, fontsize = 15)
+        plt.yticks(yticks)#, fontsize = 15)
+    
+
+
+    plt.show()
     
     return
     
