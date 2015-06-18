@@ -72,9 +72,18 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
         if data['flowField']['is_physical'] == True:
             up.plot2D(data['velslice'])
 
+
     # Resolvent Formulation
     generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
-    up.plot2D_modes(generated_flowField, fourdarray)
+    up.plot2D_modes(generated_flowField, fourdarray, True)
+    
+    
+    # Write ASCII and geom file for channelflow
+    if directory == '':
+        directory = '/home/arslan/Documents/phd/chflow_hairpins'
+        directory = ut.makeSolutionDirectory(generated_flowField, directory)
+        ut.writeASCIIfile(generated_flowField, directory)
+        ut.writeGEOMfile(generated_flowField, directory)
     
     ut.printSectionHeader()
     ut.printSectionTitle('Calculation Time')
@@ -87,38 +96,27 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
 
 
 
-
-
 if mac:
-# MAC 
-#    direct = '/Users/arslan/Dropbox/python/'
     direct = '/Users/arslan/Documents/phd/code/channelflow_solns/nagata1'
-else:    
-# DEBIAN
-#    direct = '/home/arslan/python/'
-#    direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/travelling_waves/viswanath2007/tw2'
-#    direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/travelling_waves/halcrow2008b/tw3'
+    
+else:
     direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/equilibria/nagata1'
-#    direct = '/home/arslan/Documents/channelflow-1.4.2/solutions/equilibria/p47p18'
+
+
 
 
 
 
 
 direct = ''
-n = 35
+n = 30
 re = 400
-kx = np.arange(0, 7)
-kz = np.arange(-6,7)
-#U_centreline = 1
-#c = np.linspace(0.12, 1.0, 50) * U_centreline
-c = np.array([2.0 / 3.0])
-
+kx = np.array([1])
+#kz = np.array([-10,10])
+kz = np.arange(-2, 3) #(-8, to 8)
+c = 2.0 / 3.0
 v = True
-
-
 fdary = [0, 0, 'all', 'all']
-
 
 main(direct, v, fdary, n, re, kx, kz, c)
 
