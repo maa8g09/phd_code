@@ -14,14 +14,15 @@ Author details:
     University of Southampton
 """
 
+import os
 import sys
-
+import math
 
 def printStart():
     print '##################################################################'
     print '_________ .__                                .__            '
     print '\_   ___ \|  |__ _____    ____   ____   ____ |  |           '
-    print '/    \  \/|  |  \\__  \  /    \ /    \_/ __ \|  |           '
+    print '/    \  \/|  |  \\__   \  /    \ /    \_/ __ \|  |           '
     print '\     \___|   Y  \/ __ \|   |  \   |  \  ___/|  |__         '
     print ' \______  /___|  (____  /___|  /___|  /\___  >____/         '
     print '        \/     \/     \/     \/     \/     \/               '
@@ -155,3 +156,101 @@ def checkInputValidity(fourdarray, geom_variables):
     message('The 4D array input is valid.')
     return
     
+    
+def writeASCIIfile(data, directory):
+    
+    """
+    The data variable is a dictionary which has the generated flowField and 
+    geometry information. The dictionary can be unpacked and an ASCII file with 
+    the flowfield can be written. It should be written with the following indices:
+    
+    u(nx, ny, nz, i)
+    
+    The file us written with the title:
+    wave_packet_kx_kz_c_A.asc
+    
+    The wave number triplet followed by the amplitude.
+    
+    The way that I store the flow field is in the following indexing
+    U[i, nx, ny, nz]. Just be weary of this when unpacking the matrix to file.
+    
+    """
+
+    kx = data['kx']
+    kz = data['kz']
+    c = data['c']
+    A = data['A']
+    
+    flowField = data['resolvent_flowField']
+    
+    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".asc"
+    
+    file = open(directory + fileName, "w")
+    
+    for nx in range(0, data['Nx']):
+        for ny in range(0, data['Ny']):
+            for nz in range(0, data['Nz']):
+                for nd in range(0, data['Nd']):
+                    tmp = flowField[nd, nx, ny, nz]
+                    tmp = format(tmp, '.16f')
+                    file.write(tmp + "\n")
+
+    file.close()
+    
+    print 'Boom, the ASCII is done.'
+    
+    return 0
+    
+    
+    
+def writeGEOMfile(data, directory):
+    
+    kx = data['kx']
+    kz = data['kz']
+    c = data['c']
+    A = data['A']
+    
+    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".geom"
+    
+    file = open(directory + fileName, "w")
+    
+    file.write(str( int(data['Nx']) ) + '\t\t\t\t\t\t%Nx' + "\n")
+    file.write(str( int(data['Ny']) ) + '\t\t\t\t\t\t%Ny' + "\n")
+    file.write(str( int(data['Nz']) ) + '\t\t\t\t\t\t%Nz' + "\n")
+    file.write(str( int(data['Nd']) ) + '\t\t\t\t\t\t%Nd' + "\n")
+    
+    
+    Lx = format( data['Lx'], '.16f')
+    Lz = format( data['Lz'], '.16f')
+    file.write(Lx + '\t\t%Lx' + "\n")
+    file.write(Lz + '\t\t%Lz' + "\n")
+    
+    lx = data['Lx'] / (2. * math.pi) 
+    lz = data['Lz'] / (2. * math.pi) 
+    file.write(str( lx ) + '\t\t\t\t\t\t%lx=Lx/(2pi)' + "\n")
+    file.write(str( lz ) + '\t\t\t\t\t\t%lz=Lz/(2pi)' + "\n")
+    
+    alpha = (2.* math.pi) / data['Lx']
+    file.write(str( alpha ) + '\t\t\t\t\t\t%alpha=2pi/Lx' + "\n")
+    
+    file.close()
+    
+    return 0
+    
+    
+def makeSolutionDirectory(data, directory):
+    kx = data['kx']
+    kz = data['kz']
+    c = data['c']
+    A = data['A']
+    
+    folderName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+    
+    directory = directory + folderName
+    
+    
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    
+    return directory
