@@ -6,33 +6,31 @@ from scipy.fftpack import ifft
 
 def chebdiff(N, M):
     
-"""
-      The function computes the differentiation
-      matrices D1, D2, ..., DM on Chebyshev nodes.
-
+    """
+    The function computes the differentiation
+    matrices D1, D2, ..., DM on Chebyshev nodes.
     
-      The code implements two strategies for enhanced accuracy suggested by
-      W. Don and S. Solomonoff in SIAM J. Sci. Comp. Vol. 6, pp. 1253--1268
-      (1994).
+    The code implements two strategies for enhanced accuracy suggested by
+    W. Don and S. Solomonoff in SIAM J. Sci. Comp. Vol. 6, pp. 1253--1268
+    (1994).
     
-      The two strategies are:
-        (a) the use of trigonometric identities to avoid the computation of
-            differences x(k)-x(j)
+    The two strategies are:
+      (a) the use of trigonometric identities to avoid the computation of
+          differences x(k)-x(j)
     
-        (b) the use of the "flipping trick" which is necessary since
-            sin t can be computed to high relative precision when t is small
-            whereas sin (pi-t) cannot.
+      (b) the use of the "flipping trick" which is necessary since
+          sin t can be computed to high relative precision when t is small
+          whereas sin (pi-t) cannot.
     
-      Note added May 2003: It may, in fact, be slightly better not to
-      implement the strategies (a) and (b).
+    Note added May 2003: It may, in fact, be slightly better not to
+    implement the strategies (a) and (b).
     
-      Please consult the following paper for details:
-        "Spectral Differencing with a Twist", by R. Baltensperger and
-        M.R. Trummer, to appear in SIAM J. Sci. Comp.
+    Please consult the following paper for details:
+    "Spectral Differencing with a Twist", by R. Baltensperger and
+    M.R. Trummer, to appear in SIAM J. Sci. Comp.
     
-      J.A.C. Weideman, S.C. Reddy 1998.  Help notes modified by
-      JACW, May 2003.    
-      
+    J.A.C. Weideman, S.C. Reddy 1998.  Help notes modified by
+    JACW, May 2003.
       
       
     INPUTS:
@@ -48,9 +46,7 @@ def chebdiff(N, M):
                      DM(0:N-1, 0:N-1, l) contains l-th derivative
                      matrix, l = 1..M
     
-"""    
-
-
+    """
 
 
     # Identity matrix with logical matrix
@@ -192,10 +188,10 @@ def cheb4c(N, debug):
     ss = (s**2.0) * ((-1.0)**k)
     S = np.tile(ss, N - 2.0)
     C = S / S.T
-    if debug:    
     
     # Z contains entries 1/(x(k)-x(j))
     Z = 1.0 / DX
+    
     # with zeros on the diagonal.
     np.fill_diagonal(Z, 0.0)
     

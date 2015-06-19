@@ -25,7 +25,7 @@ import utils as ut
 import os
 
 
-def main_read_construct(directory, fourdarray, verbosity):
+def main_read_construct(directory, fourdarray):
     """
     The main function that controls all reading and storing of flowfield. 
 
@@ -33,7 +33,6 @@ def main_read_construct(directory, fourdarray, verbosity):
     INPUTS:
      directory:  the directory where the solution files are
     fourdarray:  the plane co-ordinates of data you want to plot
-     verbosity:  the verbosity of the output in the python shell
         
         
     OUTPUTS:
@@ -47,10 +46,10 @@ def main_read_construct(directory, fourdarray, verbosity):
     
     # READ & CONSTRUCT
     # Check that the files exist in the directory specified.
-    dict_files = check_files(directory, verbosity)
+    dict_files = check_files(directory)
     
-    # Read and construct geometry dictionary.
-    dict_geometry = read_construct_geometry(directory, dict_files, verbosity)
+    # Read and construct geometry dictionary
+    dict_geometry = read_construct_geometry(directory, dict_files)
     
     # Check that the plane specified in fourdarray is valid in terms of the 
     # geometry of the channelflow solution read in.
@@ -58,7 +57,7 @@ def main_read_construct(directory, fourdarray, verbosity):
         ut.checkInputValidity(fourdarray, dict_geometry['physical'])
 
     # Read and construct flow field dictionary.
-    dict_flowField = read_construct_flow_field(directory, dict_files, dict_geometry,verbosity)
+    dict_flowField = read_construct_flow_field(directory, dict_files, dict_geometry)
 
     # We need to plot a plane according to the fourdarray, if physical solution
     # is provided.
@@ -74,7 +73,7 @@ def main_read_construct(directory, fourdarray, verbosity):
     return data
 
 
-def check_files(direc, verbosity):
+def check_files(direc):
     """
      Check to see if the ASCII and geometry files exist. We are also going to
      see if the files are for physical or spectral solutions.
@@ -88,8 +87,6 @@ def check_files(direc, verbosity):
     
     INPUTS:
          direc:  the directory where the solution files *should* exist
-     verbosity:  boolean that controls how verbose the output of the 
-                 function is
      
      
     OUTPUTS:
@@ -192,7 +189,7 @@ def check_files(direc, verbosity):
     return files_in_direc
 
 
-def read_construct_geometry(direc, dict_files, verbosity):
+def read_construct_geometry(direc, dict_files):
     """
     Construct a dictionary with all the geometry variables inside it. The top-
     level keys will be physical/spectral, then each value will contain a further
@@ -201,8 +198,7 @@ def read_construct_geometry(direc, dict_files, verbosity):
     
     INPUTS:
          direc:  the directory where the solution files are
-     dict_files:  a dictionary with all the solution files in it.
-     verbosity:  boolean that controls how verbose the output of the function is 
+    dict_files:  a dictionary with all the solution files in it.
      
      
     OUTPUTS:
@@ -319,7 +315,7 @@ def read_construct_geometry(direc, dict_files, verbosity):
     return dict_geometry    
 
 
-def read_construct_flow_field(direc, dict_files, dict_geometry, verbosity):
+def read_construct_flow_field(direc, dict_files, dict_geometry):
     """
     Construct a dictionary with the contents of the ASCII files split into
     relevant physical/spectral keys.
@@ -329,8 +325,6 @@ def read_construct_flow_field(direc, dict_files, dict_geometry, verbosity):
          direc:  the directory where the solution files are
      dict_files:  a dictionary containing the file names of the ascii files
  dict_geometry:  a dictionary of the geometrical variables
-     verbosity:  boolean that controls how verbose the output of the function 
-                 is 
      
      
     OUTPUTS:

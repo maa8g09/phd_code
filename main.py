@@ -25,7 +25,7 @@ import resolvent_formulation as rf
 from datetime import datetime
 
 
-def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
+def main(directory, fourdarray, N, Re, kx, kz, c):
     """
     INPUTS:
      directory:  directory where the flow solution is kept (downloaded from 
@@ -67,7 +67,7 @@ def main(directory, verbose, fourdarray, N, Re, kx, kz, c):
         ut.printSectionTitle('We will be reading in a channelflow solution')
         
         # Read in the channelflow solution and store flowfield
-        data = rc.main_read_construct(directory, fourdarray, verbose)
+        data = rc.main_read_construct(directory, fourdarray)
         
         if data['flowField']['is_physical'] == True:
             up.plot2D(data['velslice'])
@@ -109,14 +109,13 @@ else:
 
 
 direct = ''
-n = 30
+n = 42
 re = 400
 kx = np.array([1])
 #kz = np.array([-10,10])
-kz = np.arange(-2, 3) #(-8, to 8)
+kz = np.arange(-4, 5) #(-8, to 8)
 c = 2.0 / 3.0
-v = True
-fdary = [0, 0, 'all', 'all']
+fdary = [0, 'all', 'all', 0]
 
-main(direct, v, fdary, n, re, kx, kz, c)
+main(direct, fdary, n, re, kx, kz, c)
 

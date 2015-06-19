@@ -180,10 +180,11 @@ def writeASCIIfile(data, directory):
     kz = data['kz']
     c = data['c']
     A = data['A']
+    lam = data['lam']
     
     flowField = data['resolvent_flowField']
     
-    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".asc"
+    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + "_" + lam + ".asc"
     
     file = open(directory + fileName, "w")
     
@@ -209,8 +210,9 @@ def writeGEOMfile(data, directory):
     kz = data['kz']
     c = data['c']
     A = data['A']
+    lam = data['lam']
     
-    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".geom"
+    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + "_" + lam + ".geom"
     
     file = open(directory + fileName, "w")
     
@@ -243,8 +245,9 @@ def makeSolutionDirectory(data, directory):
     kz = data['kz']
     c = data['c']
     A = data['A']
+    lam = data['lam']
     
-    folderName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+    folderName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + "_" + lam
     
     directory = directory + folderName
     

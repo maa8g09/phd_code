@@ -78,15 +78,17 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                  formulation.
                       
     """
-    
+
+        
+        
     
     channel_half_height = 1.0
     u_hat = 0
     
     if modesOnly:
         # Can use independent geometrical values
-        Nx = 20
-        Nz = 16
+        Nx = 80
+        Nz = 70
         
         x = np.linspace(0.0, 2.0*math.pi, Nx)
         z = np.linspace(0.0, 2.0*math.pi, Nz)
@@ -100,7 +102,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
         
         y = np.linspace(-channel_half_height, channel_half_height, Ny)
 
-        dP_dx = -0.5 # below zero, therefore a favourable pressure gradient
+        dP_dx = -0.005 # below zero, therefore a favourable pressure gradient
         laminar_baseflow = np.zeros((Nx, Ny, Nz))
         for iy in range(0, Ny):
             laminar_baseflow[:, iy, :] = (dP_dx * Re * 0.5) * (y[iy]**2 -1.0)
@@ -162,7 +164,6 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     # singular value per mode
     singular_value = np.zeros((len(kx), len(kz)))
     
-    U = 0
     
     
     
@@ -174,9 +175,28 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     elif modesOnly:
         scalars = np.ones((len(kx), 3.0*m, len(kz)), dtype=np.complex128)
     
+        
+        
+        
+        
+    laminarOnly = True
+    laminarBase = False
+    
+    if laminarOnly:
+        lam = 'laminar'
+    else:
+        lam = ''
     
     
     
+    U = 0
+    # Laminar Base flow
+    if laminarBase:
+        U = laminar_baseflow
+        lam = 'laminar-BaseFlow'
+        
+        
+        
     # Amplitudes
     # A = sigma * khai
     amplitude = 1.1e0
@@ -189,6 +209,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                 continue
             
             print 'kx:',kx[ikx],'    kz:',kz[ikz], '    A:',amplitude
+            
             omega = kx[ikx] * c # temporal frequency
             
             C, C_adjoint_2, A, clencurt_quad, y_c = get_state_vectors(N, Re, Lx, Lz, kx[ikx], kz[ikz])
@@ -198,7 +219,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             resolvent_operator = inv(-1j*omega*np.eye(m*2) - A)
     
     
-            # Transfer Function
+            # Transfer Fcyunction
             transfer_function = C * resolvent_operator * C_adjoint_2
             
             
@@ -262,7 +283,12 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
           
             # Generated flow field
             if modesOnly:
-                U += phys_flow_field #+ laminar_baseflow
+                if laminarOnly:
+                    U = laminar_baseflow
+                elif laminarBase:
+                    U += phys_flow_field
+                else:
+                    U += phys_flow_field
                 
             else:
                 U += (scalars * phys_flow_field)
@@ -329,6 +355,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     gen_ff['kz'] = string_kz
     gen_ff['c'] = string_c
     gen_ff['A'] = string_A
+    gen_ff['lam'] = lam
     
     
     return gen_ff
