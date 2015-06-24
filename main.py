@@ -15,7 +15,6 @@ Author details:
     University of Southampton
 """
 
-mac = True
 
 import numpy as np
 import utils as ut
@@ -56,6 +55,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
     
     data = {}
     modesOnly = False
+#    perturbed = True
     
     if directory == '':
         ut.printSectionHeader()
@@ -71,20 +71,25 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
         
         if data['flowField']['is_physical'] == True:
             up.plot2D(data['velslice'])
+#
+#        if perturbed:
+#            perturbedField = ut.perturbFlowField(data)
+#            ut.writeASCIIfile_general(perturbedField)
+#            perturbed_slice = rc.get_vel_slice()
+#            up.plot2D(perturbedField)
 
-
-    # Resolvent Formulation
-    generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
-    up.plot2D_modes(generated_flowField, fourdarray, True)
-    
-    
-    # Write ASCII and geom file for channelflow
-    if directory == '':
-        directory = '/home/arslan/Documents/phd/chflow_hairpins'
-        directory = ut.makeSolutionDirectory(generated_flowField, directory)
-        ut.writeASCIIfile(generated_flowField, directory)
-        ut.writeGEOMfile(generated_flowField, directory)
-    
+#    # Resolvent Formulation
+#    generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
+#    up.plot2D_modes(generated_flowField, fourdarray, True)
+#    
+#    
+#    # Write ASCII and geom file for channelflow
+#    if directory == '':
+#        directory = '/home/arslan/Documents/work/channelflow-related/chflow_wavepackets'
+#        directory = ut.makeSolutionDirectory(generated_flowField, directory)
+#        ut.writeASCIIfile(generated_flowField, directory)
+#        ut.writeGEOMfile(generated_flowField, directory)
+#    
     ut.printSectionHeader()
     ut.printSectionTitle('Calculation Time')
     print '   ', datetime.now() - startTime, '\n'
@@ -95,25 +100,25 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
 
 
 
+mac = False
+linux = True
 
 if mac:
     direct = '/Users/arslan/Documents/phd/code/channelflow_solns/nagata1'
     
+elif linux:
+#    direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/equilibria/nagata1'
+    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4/nonlinear_solver/best_soln_ascii'
+#    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4/nonlinear_solver/perturbed'
 else:
-    direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/equilibria/nagata1'
-
-
-
-
-
-
-
-direct = ''
+    direct = ''
+    
+    
 n = 42
 re = 400
 kx = np.array([1])
 #kz = np.array([-10,10])
-kz = np.arange(-4, 5) #(-8, to 8)
+kz = np.arange(-1,2) #(-8, to 8)
 c = 2.0 / 3.0
 fdary = [0, 'all', 'all', 0]
 

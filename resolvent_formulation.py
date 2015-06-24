@@ -111,6 +111,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
         
         laminar_baseflow = np.concatenate((laminar_baseflow, yz_component, yz_component), axis=1)
         
+        f = np.zeros((Nx, Nd*Ny, Nz))
         
     else:
         # Or can use channelflow geometry dimensions to generate resolvent modes
@@ -305,6 +306,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
 
 
     U = U.real
+    U = f
     U_u = U[:,   0:m  , :]
     U_v = U[:,   m:2*m, :]
     U_w = U[:, 2*m:3*m, :]
@@ -360,6 +362,27 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     
     return gen_ff
 
+def chebyshev_points(N, a, b):
+    """
+    INPUTS:
+    N:  number of grid points
+    a:  upper bound of domain
+    b:  lower bound of domain
+    
+    OUTPUTS:
+    y:  Chebyshev points
+    """
+
+    y_cheb = np.arange(N, dtype=np.float)
+    pi_N = math.pi / (N - 1.0)
+    radius = (b - a) / 2.0
+    center = (b + a) / 2.0
+    for j in range(0,N):
+        tmp0=j*pi_N
+        tmp1=math.cos(j*pi_N)
+        y_cheb[j] = center + radius*tmp1
+    
+    return y_cheb
 
 def get_state_vectors(N, Re, Lx, Lz, kx, kz):
     """
@@ -407,6 +430,8 @@ def get_state_vectors(N, Re, Lx, Lz, kx, kz):
     y_c, D4 = ps.cheb4c(N, False)
     # returns y without endpoints
     
+    y_cheb = chebyshev_points(N, -1, 1)
+    
     # For the Orr-Sommerfeld equations we need to calculate the derivates
     #          D = partial_dy
     #  del_hat_2 = D**2.0 - K**2.0, where K**2.0 = kx**2.0 + kz**2.0
@@ -425,7 +450,7 @@ def get_state_vectors(N, Re, Lx, Lz, kx, kz):
     del_hat_2 = D2 - K2*I
     del_hat_4 = D4 - 2.0*D2*K2 + K2*K2*I
     
-
+    # Laminar Base flow 
     U = np.identity(m) # Mean flow Uo(y), 1 at centreline
     np.fill_diagonal(U, 1 - y_c**2.0)
     dU_dy  = np.identity(m)

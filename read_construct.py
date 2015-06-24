@@ -113,11 +113,11 @@ def check_files(direc):
 
     # Now we loop through the files in the directory to find which ones exist.
     for fi in files:
-        if a in str(fi):
+        if a in str(fi) and c not in str(fi):
             a = str(fi) # physical geometry file
         if c in str(fi):
             c = str(fi) # spectral geometry file
-        if b in str(fi):
+        if b in str(fi) and d not in str(fi):
             b = str(fi) # physical ascii file
         if d in str(fi):
             d = str(fi) # spectral ascii file
@@ -127,6 +127,9 @@ def check_files(direc):
     files_in_direc = {}
     physical = False
     spectral = False
+    files_in_direc['physical'] = physical
+    files_in_direc['spectral'] = spectral
+    
     missing_p_geo, missing_p_asc,  missing_s_geo, missing_s_asc = '', '', '', ''
     
     # Check to see if there are BOTH physical files (ASCII and GEO)
