@@ -40,7 +40,7 @@ def chebdiff(N, M):
     
     
     OUTPUT:
-             x:  Chebyshev nodes (length N)
+             x:  Interior Chebyshev points (length N) [Chebyshev nodes]
             DM:  differentiation matrix of size (M x N x N), containing 
                  differentiation matrices:
                      DM(0:N-1, 0:N-1, l) contains l-th derivative

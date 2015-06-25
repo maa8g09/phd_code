@@ -53,9 +53,13 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
     # Measure the amount of time it takes to execute this routine.
     startTime = datetime.now()
     
+
     data = {}
+    
     modesOnly = False
     perturbed = True
+
+
     
     if directory == '':
         ut.printSectionHeader()
@@ -67,6 +71,11 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
         ut.printSectionTitle('We will be reading in a channelflow solution')
         
         # Read in the channelflow solution and store flowfield
+        #
+        # The data variable should be a class. See how classes work in python
+        # and think about how you could implement them into your code:
+        # http://www.jesshamrick.com/2011/05/18/an-introduction-to-classes-and-inheritance-in-python/
+        #
         data = rc.main_read_construct(directory, fourdarray)
         
         if data['flowField']['is_physical'] == True:
@@ -106,17 +115,18 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
 
 
 mac = False
-linux = True
+linux = False
 
 if mac:
     direct = '/Users/arslan/Documents/phd/code/channelflow_solns/nagata1'
     
 elif linux:
 #    direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/equilibria/nagata1'
-    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4'
-    direct ='home/arslan/ubest'
+#    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4'
+#    direct ='home/arslan/ubest'
 #    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4/nonlinear_solver/perturbed'
 #    direct ='/home/arslan/Documents/work/channelflow-related/chflow_wavepackets/laminar'
+     direct = '/home/arslan/Desktop'
     
 else:
     direct = ''
@@ -124,7 +134,7 @@ else:
     
 n = 42
 re = 400
-kx = np.array([6])
+kx = np.array([3])
 #kz = np.array([-10,10])
 kz = np.arange(-1,2) #(-8, to 8)
 c = 2.0 / 3.0

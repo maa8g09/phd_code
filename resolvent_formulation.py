@@ -1,27 +1,4 @@
 """
-
-WARNING:
-
-This file is vastly different from what is in the repository. What you have to
-do is integrate this code into the other file and then commit changes. At the 
-end of the computation I should output the flow field in ASCII format that 
-channelflow can easily convert into a binary format (.ff).
-
-Then we see what happens. Also, Mitul's code is a great place to go to 
-understand how to truncate files.
-
-As well as that double check the projection code you have written so that you 
-can re-construct flowfields as they were. I.e. the getting the scalars and then 
-multiplying the flowfield by the scalars.
-
-To do this, you have to redo the entire logic, not redo, but definitely re-read 
-Atis papers and go through it all once more and then compute.
-
-"""
-
-
-
-"""
 RESOLVENT FORMULATION
 
 Resolvent formulation and projection code. This is the main routine that calls 
@@ -79,9 +56,9 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                       
     """
 
+    # TIDY THIS FUNCTION
         
-        
-    
+    # Geometric considerations:
     channel_half_height = 1.0
     u_hat = 0
     
@@ -96,22 +73,22 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
         Ny = N - 2
         Nd = 3
         
-        
         Lx = 2.0*math.pi
         Lz = 2.0*math.pi
         
         y = np.linspace(-channel_half_height, channel_half_height, Ny)
 
-        dP_dx = -0.005 # below zero, therefore a favourable pressure gradient
+        dP_dx = 0.005 # I use this value so that the centreline velocity is 1
         laminar_baseflow = np.zeros((Nx, Ny, Nz))
         for iy in range(0, Ny):
-            laminar_baseflow[:, iy, :] = (dP_dx * Re * 0.5) * (y[iy]**2 -1.0)
+            laminar_baseflow[:, iy, :] = (dP_dx * Re * 0.5) * (1.0 - y[iy]**2)
         
         yz_component = np.zeros((Nx, Ny, Nz))
         
         laminar_baseflow = np.concatenate((laminar_baseflow, yz_component, yz_component), axis=1)
         
 #        f = np.zeros((Nx, Nd*Ny, Nz))
+
         
     else:
         # Or can use channelflow geometry dimensions to generate resolvent modes
@@ -149,10 +126,16 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             
             
             
-    kinematic_visc = 1.36e-04 # air, temperature 20oC
     # according to Gibson's channel flow code, kinematic_visc = 1/Re
-    UBulk = (Re * kinematic_visc) / (channel_half_height * 2.0)
-    UBulk = (1.0) / (channel_half_height * 2.0) # 0.5
+    Ubulk = (1.0) / (channel_half_height * 2.0)
+    
+    # Ubulk is actually calculated as follows:
+    # take the integral from -1 to 1 of laminar flow:
+    # i.e.
+    # integrate 1-y^2 to get y - y^3/3
+    # putting in the limits [-1,1]
+    # we get
+    # Ubulk = 4/3
 
     t = 1  # run-time
     m = N - 2 # number of modes
@@ -166,8 +149,6 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     singular_value = np.zeros((len(kx), len(kz)))
     
     
-    
-    
     # Scalars
     if not modesOnly:
         if data['flowField']['is_spectral']:
@@ -177,30 +158,20 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
         scalars = np.ones((len(kx), 3.0*m, len(kz)), dtype=np.complex128)
     
         
-        
-        
-        
+
+
+
+    U = 0
     laminarOnly = True
-    laminarBase = False
-    
     if laminarOnly:
         lam = 'laminar'
     else:
         lam = ''
     
     
-    
-    U = 0
-    # Laminar Base flow
-    if laminarBase:
-        U = laminar_baseflow
-        lam = 'laminar-BaseFlow'
-        
-        
-        
     # Amplitudes
     # A = sigma * khai
-    amplitude = 1.1e0
+    amplitude = 1.0e-5
     
     
     for ikx in range(0, len(kx)):
@@ -211,97 +182,112 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             
             print 'kx:',kx[ikx],'    kz:',kz[ikz], '    A:',amplitude
             
-            omega = kx[ikx] * c # temporal frequency
             
-            C, C_adjoint_2, A, clencurt_quad, y_c = get_state_vectors(N, Re, Lx, Lz, kx[ikx], kz[ikz])
-    
-            # The resolvent of A
-            #                        (-iwI - A) ^(-1)
-            resolvent_operator = inv(-1j*omega*np.eye(m*2) - A)
-    
-    
-            # Transfer Fcyunction
-            transfer_function = C * resolvent_operator * C_adjoint_2
+            # Calculate the temporal frequency
+            omega = kx[ikx] * c
             
             
-            # Perform SVD on the resolvent operator to get the forcing, 
+            # Get the state vectors so that you can compute the resolvent operator
+            # and hence the transfer function.
+            # 
+            # The calculations given below (and variable names) are outlined in:
+            #     Moarref, Model-based scaling of the streamwise energy 
+            #     density in high-Reynolds number turbulent channels, 2013.
+            C, C_adj, A, w, y_cheb = get_state_vectors(N, Re, Lx, Lz, kx[ikx], kz[ikz])
+            
+            
+            # The resolvent of state operator A
+            R_A = inv(-1j*omega*np.eye(m*2) - A)
+            
+            
+            # Transfer function
+            H = C*R_A*C_adj
+            
+            
+            # Perform SVD on the resolvent operator (R_A) to get the forcing, 
             # singluar and response modes. This also gives a flow field 
             # in spectral space.
-            U_spectral, sigma, V_spectral = svd(transfer_function)
-            # U_spectral: resolvent modes in fourier space
-            #      sigma: signular values
-            # V_spectral: forcing modes in fourier space
-            #
+            # 
+            #   U_spectral: response modes in fourier space (resolvent modes)
+            #        sigma: signular values
+            #   V_spectral: forcing modes in fourier space
+            U_spectral, sigma, V_spectral = svd(H)
             
     
             # Solve linear equation to get the physical velocities in
             # streamwise direction.
-            resolvent_modes = solve(clencurt_quad.T, U_spectral)
-            resolvent_modes = U_spectral
-            # Ax = b
-            #  A: clencurt_quad.T
-            #  x: resolvent modes
-            #  b: U_spectral
+            #     Ax = b
+            #      A: w.T
+            #      x: resolvent modes
+            #      b: U_spectral
+            resolvent_modes = solve(w.T, U_spectral) # Make sure you disassociate the modes from the clencurt quadrature.
             
             
-            if not modesOnly:
-                # now we get the scalars used to re-construct the flow field
-                tmp_scalar = get_scalars(u_hat[ikx, :, ikz], resolvent_modes, clencurt_quad)
-                scalars[ikx, :, ikz] = tmp_scalar
-                sc_tmp = np.delete(scalars, (0), axis=2)
-                mirroredSc = sc_tmp[:,:,::-1]
-                doublesSc = np.concatenate((mirroredSc, sc_tmp), axis=2)
-                scaShape = doublesSc.shape
-    
-    
+            ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+            # Re-check the following block .. .. ..
+            ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+            
+#            if not modesOnly:
+#                # now we get the scalars used to re-construct the flow field
+#                tmp_scalar = get_scalars(u_hat[ikx, :, ikz], resolvent_modes, w)
+#                scalars[ikx, :, ikz] = tmp_scalar
+#                sc_tmp = np.delete(scalars, (0), axis=2)
+#                mirroredSc = sc_tmp[:,:,::-1]
+#                doublesSc = np.concatenate((mirroredSc, sc_tmp), axis=2)
+#                scaShape = doublesSc.shape
+            
+            ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+            ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+            
+            
             # Store the generated modes and the first singular values
             # for each wavenumber triplet.
             # take the first column of the resolvent modes
-            #mode[:, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
-    #        singular_value[ikx, ikz] = sigma[0]
-    
-            
-            # Here we are going to calculate u_tilde:
-            u_tilde = amplitude * resolvent_modes
+            mode[:, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
+            singular_value[ikx, ikz] = sigma[0]
             
             
+            # Calculate u_tilde
+            if modesOnly:
+                u_tilde = amplitude * resolvent_modes
+            else:
+                u_tilder = sigma.T * scalars * resolvent_modes
             
-            # Convert the response modes to physical space
-            phys_flow_field = np.zeros((len(x), len(u_tilde[:,0]), len(z)), dtype=np.complex128)
-            rank = u_tilde.shape[0]
             
-            rank = 5
-            
+            # Convert the resolvent modes to physical space
+            physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
+
+
+            # Rank of resolvent modes, this can be lowered to use less of the 
+            # modes to calculate the physical flow field.
+            rank = 13
+            rank = min(rank, 3*m)
             for iy in range(0, rank):
-                phys_flow_field += ifft(u_tilde[:,iy], kx[ikx], kz[ikz], omega, x, z, t, Lx, Lz)
+                physical_ff += ifft(u_tilde[:,iy], kx[ikx], kz[ikz], omega, x, z, t, Lx, Lz)
                 
-            
             
             # Generated flow field is the velocity vector U
             # which contains (u,v,w)
-    #                U += (sigma[0] * scalars[0,:,:] * phys_flow_field[0,:,:])
+            # U += (sigma[0] * scalars[0,:,:] * physical_ff[0,:,:])
             
           
             # Generated flow field
             if modesOnly:
                 if laminarOnly:
                     U = laminar_baseflow
-                elif laminarBase:
-                    U += phys_flow_field
                 else:
-                    U += phys_flow_field
+                    U += physical_ff
                 
             else:
-                U += (scalars * phys_flow_field)
+                U += physical_ff
         
-
         
         fmt = '{0:<20} {1:<20}'
-        
         string_kx = str(kx[ikx])
         string_kz = str(kz[ikz])
         string_c = format(c, '.4f')
         string_A = str(amplitude)
+        
 
 
 
@@ -312,7 +298,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     U_w = U[:, 2*m:3*m, :]
     
     
-    # output the flow field as an ASCII file for channelflow to read in.
+    # Output the flow field as an ASCII file for channelflow to read in.
     
     # Here I need ot construct my geometry file and pack the dictionary such that
     # when it's opened in utils, the writing is as easy as channelflow writing 
@@ -345,13 +331,14 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     gen_ff['X'] = x
     gen_ff['Y'] = y
     gen_ff['Z'] = z
+
     gen_ff['Nx'] = Nx
     gen_ff['Ny'] = m
     gen_ff['Nz'] = Nz
     gen_ff['Nd'] = Nd
+
     gen_ff['Lx'] = Lx
     gen_ff['Lz'] = Lz
-        
     
     gen_ff['kx'] = string_kx
     gen_ff['kz'] = string_kz
@@ -361,6 +348,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     
     
     return gen_ff
+
+
 
 def chebyshev_points(N, a, b):
     """
@@ -373,37 +362,42 @@ def chebyshev_points(N, a, b):
     y:  Chebyshev points
     """
 
-    y_cheb = np.arange(N, dtype=np.float)
+    y_chebheb = np.arange(N, dtype=np.float)
     pi_N = math.pi / (N - 1.0)
     radius = (b - a) / 2.0
     center = (b + a) / 2.0
     for j in range(0,N):
         tmp0=j*pi_N
         tmp1=math.cos(j*pi_N)
-        y_cheb[j] = center + radius*tmp1
+        y_chebheb[j] = center + radius*tmp1
     
-    return y_cheb
+    return y_chebheb
+
+
 
 def get_state_vectors(N, Re, Lx, Lz, kx, kz):
     """
     We are calculating the state vectors in this function. The methodology
     followed here is given in the following reference in the "Formulation" 
-    section (2. Low-rank approximation to channel flow), 
-    Moarreff, 2013, Model-based scaling of the streamwise energy density.
+    section, 
+        2. Low-rank approximation to channel flow,
+        
+        (Moarref, Model-based scaling of the streamwise energy 
+        density in high-Reynolds number turbulent channels, 2013)
     
     
     INPUTS:
-             N:  the number of grid points in the y-axis.
+             N:  number of grid points in the y-axis.
             Re:  Reynolds number
-            Lx:  length of solution box
-            Lz:  width of solution box
+            Lx:  length of solution
+            Lz:  width of solution
             kx:  streamwise wavenumber
             kz:  spanwise wavenumber
             
      
     OUTPUTS:
              C:  this operator maps the state vector onto the velocity vector
-   C_adjoint_2:  adjoint of C, maps the forcing vector to the state vector
+         C_adj:  adjoint of C, maps the forcing vector to the state vector
              A:  state operator
              W:  ClenCurt matrix (Clenshaw-Curtis quadrature)
              y:  grid-points in the y-axis
@@ -414,85 +408,90 @@ def get_state_vectors(N, Re, Lx, Lz, kx, kz):
     kz = kz * (2.0 * math.pi) / Lz
     
     
-    # Calculate the differentiation matrix for the number of y-co-ordinates we
-    # have (N)
-    x, DM = ps.chebdiff(N, 2)
-
+    # Calculate the differentiation matrix, DM, for the resolution in the 
+    # y-axis, N. 
+    # y_cheb are the interpolated y co-ordinates, i.e. Chebyshev interior points.
+    y_cheb, DM = ps.chebdiff(N, 2)
+    
+    
+    # First derivative matrix
+    D1 = DM[0, 1:-1, 1:-1]
     
     # Second derivative matrix
-    D1 = DM[0, 1:-1, 1:-1]
-    # Boundary condition
     D2 = DM[1, 1:-1, 1:-1]
 
 
-    # Fourth derivative matrix
-    # and clamped boundary conditions
-    y_c, D4 = ps.cheb4c(N, False)
-    # returns y without endpoints
+    # Fourth derivative matrix and clamped boundary conditions
+    tmp, D4 = ps.cheb4c(N, False)
+    # tmp is the same as y_cheb without endpoints, i.e. no [-1,1]
     
-    y_cheb = chebyshev_points(N, -1, 1)
     
     # For the Orr-Sommerfeld equations we need to calculate the derivates
-    #          D = partial_dy
-    #  del_hat_2 = D**2.0 - K**2.0, where K**2.0 = kx**2.0 + kz**2.0
-    #       dUdy = first derivative of Uo(y)
-    #      dU2dy = second derivative of Uo(y)
-    #          f = time derivative.
+    #            D:  partial_dy
+    #    del_hat_2:  D**2.0 - K**2.0         (where K**2.0 = kx**2.0 + kz**2.0)
+    #         dUdy:  first derivative of Uo(y)
+    #        dU2dy:  second derivative of Uo(y)
+    #            f:  time derivative
     
     
     # Number of modes
-    m = N - 2 
-    
-    I = np.eye(m)
+    m = N - 2 # calculate without the endpoints, otherwise m = N
+    I = np.identity(m)
     Z = np.zeros(shape=(m, m))
     K2 = kx**2.0 + kz**2.0
-
     del_hat_2 = D2 - K2*I
     del_hat_4 = D4 - 2.0*D2*K2 + K2*K2*I
     
-    # Laminar Base flow 
-    U = np.identity(m) # Mean flow Uo(y), 1 at centreline
-    np.fill_diagonal(U, 1 - y_c**2.0)
-    dU_dy  = np.identity(m)
     
-    np.fill_diagonal(dU_dy, -2.0*y_c)
+    # Laminar Base flow 
+    U = np.identity(m) 
+    np.fill_diagonal(U, 1 - y_cheb**2.0) # 1 at centreline
+    
+    dU_dy  = np.identity(m)
+    np.fill_diagonal(dU_dy, -2.0*y_cheb)
+    
     dU2_dy = -2.0
 
 
     # pg 60 Schmid Henningson eq3.29 and 3.30
     # -1j*M + L = 0
-    OS_operator = ((1.0 / Re) * del_hat_4) + (1j * kx * dU2_dy * I) - (1j * kx * U * del_hat_2)
-    SQ_operator = ((1.0 / Re) * del_hat_2) - (1j * kx * U)
+    SQ_operator = ((1.0/Re) * del_hat_2) - (1j * kx * U)
     C_operator  = -1.0j * kz * dU_dy
-
-
-    # Moarreff (2013) - Model-based scaling of the streamwise energy density
+    
+    OS_operator = ((1.0/Re) * del_hat_4) + (1j * kx * dU2_dy * I) - (1j * kx * U * del_hat_2)
     x0 = solve(del_hat_2, OS_operator)
-        
-    # State-Operator
+    
+    # Equation 2.7
+    # (Moarref, Model-based scaling of the streamwise energy density in 
+    # high-Reynolds number turbulent channels, 2013)
+    #
+    # State operator
+    # A = | x0   Z  |
+    #     |  C   SQ |
     A = np.vstack((np.hstack((x0,Z)), np.hstack((C_operator, SQ_operator))))
 
  
     # C maps state vector to the velocity vector
-    C = np.vstack((np.hstack((( 1j / K2) * (kx * D1), (-1j / K2) *  (kz * I))), 
-                   np.hstack((                        I,                       Z)), 
-                   np.hstack(( ( 1j / K2) * (kz * D1), ( 1j / K2) * (kx * I)))))
+    C = np.vstack((np.hstack(((1j/K2) * (kx*D1), (-1j/K2) * (kz*I))), 
+                   np.hstack((                I,                Z)), 
+                   np.hstack(((1j/K2) * (kz*D1), ( 1j/K2) * (kx*I)))))
     
     C = np.asmatrix(C)
+    
     
     tmp, dy = ps.clencurt(N);
     W = np.diag(np.sqrt(dy[1:-1]))
     W = np.vstack((np.hstack((W,Z,Z)),
                    np.hstack((Z,W,Z)),
                    np.hstack((Z,Z,W))))
-    C = W*C;
+    C *= W
     
     
     # Adjoint of C maps the forcing vector to the state vector. 
-    C_adjoint_2 = pinv(C)
+    C_adj = pinv(C)
     
     
-    return C, C_adjoint_2, A, W, y_c
+    return C, C_adj, A, W, y_cheb
         
     
     
@@ -590,12 +589,12 @@ def fft_flowField(data):
     return data
     
 
-def get_scalars(u_hat, resolvent_modes, clencurt_quad):
+def get_scalars(u_hat, resolvent_modes, w):
 
     resolvent_modes = np.asmatrix(resolvent_modes)
     resolvent_modes_star = resolvent_modes.getH() # complex conjugate of the modes.
     
-    clencurt_quad = np.asmatrix(clencurt_quad)
+    w = np.asmatrix(w)
 
     scalars = np.zeros((u_hat.shape), dtype=np.complex128) # (3*Ny)
     
@@ -607,7 +606,7 @@ def get_scalars(u_hat, resolvent_modes, clencurt_quad):
         resolvent_modes_col = np.asmatrix(resolvent_modes_star[:,i]) # column of resolvent modes
         # Dimensions:
         #    1     =  1xN *     NxN     *       Nx1
-        tmp = u_hat * clencurt_quad * resolvent_modes_col
+        tmp = u_hat * w * resolvent_modes_col
         scalars[i] = tmp[0,0]
     
     a = scalars
