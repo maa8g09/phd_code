@@ -255,5 +255,56 @@ def makeSolutionDirectory(data, directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
     
-    
     return directory
+    
+    
+    
+    
+    
+def perturbFlowField(data):
+    if data['read']:
+        u = data['flowField']['physical'][0, :, :, :]
+        # perturb u vel
+        u[:, 1, :] = 0.01
+        u[:, 2, :] = 0.02
+        u[:, 3, :] = 0.01
+        data['flowField']['physical'] = u
+        
+        
+    else:
+        u = data['resolvent_flowField'][0, :, :, :]
+        # perturb u vel
+        u[:, 1, :] = 0.4
+        u[:, 2, :] = 0.7
+        u[:, 3, :] = 0.6
+        u[:, 4, :] = 0.3
+        data['resolvent_flowField'][0, :, :, :] = u
+        data['U'] = u
+        
+    return data
+
+
+
+def writeASCIIfile_general(data, directory):
+    
+    flowField = data['flowField']['physical']
+    
+    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + "_" + lam + ".asc"
+    
+    file = open(directory + fileName, "w")
+    
+    for nx in range(0, data['Nx']):
+        for ny in range(0, data['Ny']):
+            for nz in range(0, data['Nz']):
+                for nd in range(0, data['Nd']):
+                    tmp = flowField[nd, nx, ny, nz]
+                    tmp = format(tmp, '.16f')
+                    file.write(tmp + "\n")
+
+    file.close()
+    
+    print 'Boom, the ASCII is done.'
+    
+    return 0
+    
+    

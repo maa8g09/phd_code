@@ -111,7 +111,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
         
         laminar_baseflow = np.concatenate((laminar_baseflow, yz_component, yz_component), axis=1)
         
-        f = np.zeros((Nx, Nd*Ny, Nz))
+#        f = np.zeros((Nx, Nd*Ny, Nz))
         
     else:
         # Or can use channelflow geometry dimensions to generate resolvent modes
@@ -306,7 +306,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
 
 
     U = U.real
-    U = f
+#    U = f
     U_u = U[:,   0:m  , :]
     U_v = U[:,   m:2*m, :]
     U_w = U[:, 2*m:3*m, :]
