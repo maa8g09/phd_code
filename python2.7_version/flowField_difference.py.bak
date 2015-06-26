@@ -57,13 +57,13 @@ def diff_check(directory, ff_1, ff_2):
                         differences[label] = diff
                         
     if not differences:
-        print('Done checking all differences, there were...')
-        print('No Differences :)')
+        print 'Done checking all differences, there were...'
+        print 'No Differences :)'
         
     else:
-        print('Done checking all differences, there were...')
-        print('Some differences...')
-        print('Check the dictionary in debug mode')
+        print 'Done checking all differences, there were...'
+        print 'Some differences...'
+        print 'Check the dictionary in debug mode'
         
     
     return 0

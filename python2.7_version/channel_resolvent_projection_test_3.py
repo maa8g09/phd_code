@@ -166,7 +166,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c):
     for i, line in enumerate(f):
         var_ff_list.append(float(line))
 
-    print('\n    Closing the ASCII file')
+    print '\n    Closing the ASCII file'
     f.close()
     
     
@@ -251,7 +251,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c):
                 tmpu = var_ff_u[i_kx,:,i_kz]
                 transformed_signal[i_kx, :, i_kz] = fft(tmpu, kx[i_kx], kz[i_kz], c[i_c], x_grid_points, z_grid_points, t, geom['Lx'], geom['Lz'])
                 
-                print('kx:', kx[i_kx], '    kz:', kz[i_kz], '    c:', c[i_c])
+                print 'kx:', kx[i_kx], '    kz:', kz[i_kz], '    c:', c[i_c]
                     
     arslan = transformed_signal
     
@@ -319,8 +319,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c):
     for i_kx in range(0, len(kx)):          # for every stream-wise wavenumber
         for i_kz in range(0, len(kz)):          # for every span-wise wavenumber
             for i_c in range(0, len(c)):            # for every phase speed
-                print('Wavenumber triplet:')
-                print('kx:', kx[i_kx], '    kz:', kz[i_kz], '    c:', c[i_c])
+                print 'Wavenumber triplet:'
+                print 'kx:', kx[i_kx], '    kz:', kz[i_kz], '    c:', c[i_c]
                 
                 # account for kx = kz = 0 (turbulent mean)
                 if kx[i_kx] == 0 and kz[i_kz] == 0:

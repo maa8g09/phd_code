@@ -203,7 +203,7 @@ def cheb4c(N, debug):
     # you can concatenate the lists together side by side.
     Y = np.zeros((N-3, N-2.0))
     for i in range(0, int(N)-2):
-        Y[:,i] = [a for a in X[:,i] if a != 0.0]
+        Y[:,i] = filter(lambda a: a != 0.0, X[:,i])
     
     X = Y
 

@@ -27,7 +27,7 @@ def dot(u, v):
     a = []
     if abs(len(u) - len(v)) < 1e-12:
         a = [ sum(u[i]*v[i] for i in range(len(u))) ]
-        print('\n', a, '\n')
+        print '\n', a, '\n'
     else:
         utils.error('Vectors are of different length (utils_math: dot)')
     return a
@@ -39,23 +39,32 @@ def normalize(v):
     
 
 def squareRoot(list):
-    return [math.sqrt(x) for x in list]    
+    return map(lambda x: math.sqrt(x), list)    
 
 
 def square(list):
-    return [x ** 2.0 for x in list]
+    return map(lambda x: x ** 2.0, list)
 
 def fft(signal):
    n = len(signal)
    if n == 1:
       return signal
    else:
-      Feven = fft([signal[i] for i in range(0, n, 2)])
-      Fodd = fft([signal[i] for i in range(1, n, 2)])
+      Feven = fft([signal[i] for i in xrange(0, n, 2)])
+      Fodd = fft([signal[i] for i in xrange(1, n, 2)])
  
       combined = [0] * n
-      for m in range(n/2):
+      for m in xrange(n/2):
          combined[m] = Feven[m] + omega(n, -m) * Fodd[m]
          combined[m + n/2] = Feven[m] - omega(n, -m) * Fodd[m]
  
       return combined
+      
+def fft_plane():
+    # first we want to fourier transform the plane in the x direction, and then 
+    # the y direction. WE could then compare our results to fft2.
+
+    # it is also worth testing the code against fft in one direction, 
+    # but specifying the direction axis to fourier transform in
+
+    return

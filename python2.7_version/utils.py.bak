@@ -19,67 +19,67 @@ import sys
 import math
 
 def printStart():
-    print('##################################################################')
-    print('_________ .__                                .__            ')
-    print('\_   ___ \|  |__ _____    ____   ____   ____ |  |           ')
-    print('/    \  \/|  |  \\__   \  /    \ /    \_/ __ \|  |           ')
-    print('\     \___|   Y  \/ __ \|   |  \   |  \  ___/|  |__         ')
-    print(' \______  /___|  (____  /___|  /___|  /\___  >____/         ')
-    print('        \/     \/     \/     \/     \/     \/               ')
-    print('    __________                    .__                      __   ')
-    print('    \______   \ ____   __________ |  |___  __ ____   _____/  |_ ')
-    print('     |       _// __ \ /  ___/  _ \|  |\  \/ // __ \ /    \   __\.')
-    print('     |    |   \  ___/ \___ (  <_> )  |_\   /\  ___/|   |  \  |  ')
-    print('     |____|_  /\___  >____  >____/|____/\_/  \___  >___|  /__|  ')
-    print('            \/     \/     \/                     \/     \/      ')
-    print('Muhammad Arslan Ahmed')
-    print('University of Southampton')
-    print('##################################################################')
+    print '##################################################################'
+    print '_________ .__                                .__            '
+    print '\_   ___ \|  |__ _____    ____   ____   ____ |  |           '
+    print '/    \  \/|  |  \\__   \  /    \ /    \_/ __ \|  |           '
+    print '\     \___|   Y  \/ __ \|   |  \   |  \  ___/|  |__         '
+    print ' \______  /___|  (____  /___|  /___|  /\___  >____/         '
+    print '        \/     \/     \/     \/     \/     \/               '
+    print '    __________                    .__                      __   '
+    print '    \______   \ ____   __________ |  |___  __ ____   _____/  |_ '
+    print '     |       _// __ \ /  ___/  _ \|  |\  \/ // __ \ /    \   __\.'
+    print '     |    |   \  ___/ \___ (  <_> )  |_\   /\  ___/|   |  \  |  '
+    print '     |____|_  /\___  >____  >____/|____/\_/  \___  >___|  /__|  '
+    print '            \/     \/     \/                     \/     \/      '
+    print 'Muhammad Arslan Ahmed'
+    print 'University of Southampton'
+    print '##################################################################'
     return
 
 
 def printSectionHeader():
-    print('__________________________________________________________________\n')
+    print '__________________________________________________________________\n'
     return
 
 
 def printSectionTitle(str):
     # Print the section headers for each main section of the code output.
-    print(' **', str, '\n')
+    print ' **', str, '\n'
     return
 
 
 def error(str):
     # Print the error and then exit from the program entirely
-    print('!!!!====!!!!====!!!!====!!!!====!!!!====')
-    print('ERROR:', str)
-    print('!!!!====!!!!====!!!!====!!!!====!!!!====')
-    print('\n\n\n')
-    print('  ______    ______   __       __  ________       ')
-    print(' /      \  /      \ |  \     /  \|        \      ')
-    print('|  $$$$$$\|  $$$$$$\| $$\   /  $$| $$$$$$$$      ')
-    print('| $$ __\$$| $$__| $$| $$$\ /  $$$| $$__          ')
-    print('| $$|    \| $$    $$| $$$$\  $$$$| $$  \         ')
-    print('| $$ \$$$$| $$$$$$$$| $$\$$ $$ $$| $$$$$         ')
-    print('| $$__| $$| $$  | $$| $$ \$$$| $$| $$_____       ')
-    print(' \$$    $$| $$  | $$| $$  \$ | $$| $$     \      ')
-    print('  \$$$$$$  \$$   \$$ \$$      \$$ \$$$$$$$$      ')                          
-    print('                                                 ')
-    print('  ______   __     __  ________  _______          ')
-    print(' /      \ |  \   |  \|        \|       \         ')
-    print('|  $$$$$$\| $$   | $$| $$$$$$$$| $$$$$$$\        ')
-    print('| $$  | $$| $$   | $$| $$__    | $$__| $$        ')
-    print('| $$  | $$ \$$\ /  $$| $$  \   | $$    $$        ')
-    print('| $$  | $$  \$$\  $$ | $$$$$   | $$$$$$$\        ')
-    print('| $$__/ $$   \$$ $$  | $$_____ | $$  | $$        ')
-    print(' \$$    $$    \$$$   | $$     \| $$  | $$        ')
-    print('  \$$$$$$      \$     \$$$$$$$$ \$$   \$$        ')
+    print '!!!!====!!!!====!!!!====!!!!====!!!!===='
+    print 'ERROR:', str
+    print '!!!!====!!!!====!!!!====!!!!====!!!!===='
+    print '\n\n\n'
+    print '  ______    ______   __       __  ________       '
+    print ' /      \  /      \ |  \     /  \|        \      '
+    print '|  $$$$$$\|  $$$$$$\| $$\   /  $$| $$$$$$$$      '
+    print '| $$ __\$$| $$__| $$| $$$\ /  $$$| $$__          '
+    print '| $$|    \| $$    $$| $$$$\  $$$$| $$  \         '
+    print '| $$ \$$$$| $$$$$$$$| $$\$$ $$ $$| $$$$$         '
+    print '| $$__| $$| $$  | $$| $$ \$$$| $$| $$_____       '
+    print ' \$$    $$| $$  | $$| $$  \$ | $$| $$     \      '
+    print '  \$$$$$$  \$$   \$$ \$$      \$$ \$$$$$$$$      '                          
+    print '                                                 '
+    print '  ______   __     __  ________  _______          '
+    print ' /      \ |  \   |  \|        \|       \         '
+    print '|  $$$$$$\| $$   | $$| $$$$$$$$| $$$$$$$\        '
+    print '| $$  | $$| $$   | $$| $$__    | $$__| $$        '
+    print '| $$  | $$ \$$\ /  $$| $$  \   | $$    $$        '
+    print '| $$  | $$  \$$\  $$ | $$$$$   | $$$$$$$\        '
+    print '| $$__/ $$   \$$ $$  | $$_____ | $$  | $$        '
+    print ' \$$    $$    \$$$   | $$     \| $$  | $$        '
+    print '  \$$$$$$      \$     \$$$$$$$$ \$$   \$$        '
     sys.exit('')
     return
     
     
 def message(str):
-    print('   ', str, '\n')
+    print '   ', str, '\n'
     return
 
 
@@ -100,10 +100,10 @@ def printGeoVars(geom_variables):
     """
     This function prints out the grid dimensions of the channelflow solution.
     """
-    print('\n    The geometry variables are:')
-    print('      Nx:', geom_variables['Nx'])
-    print('      Ny:', geom_variables['Ny'])
-    print('      Nz:', geom_variables['Nz'])
+    print '\n    The geometry variables are:'
+    print '      Nx:', geom_variables['Nx']
+    print '      Ny:', geom_variables['Ny']
+    print '      Nz:', geom_variables['Nz']
     
     return
 
@@ -135,17 +135,17 @@ def checkInputValidity(fourdarray, geom_variables):
         if fourdarray[i] != 'all':
             if i == 1:
                 if fourdarray[i] >= geom_variables['Nx']:
-                    print('\n  ! The 4D array input is invalid')
+                    print '\n  ! The 4D array input is invalid'
                     printGeoVars(geom_variables)
                     error('X point given exceeds the maximum grid points available')
             elif i == 2:
                 if fourdarray[i] >= geom_variables['Ny']:
-                    print('\n  ! The 4D array input is invalid')
+                    print '\n  ! The 4D array input is invalid'
                     printGeoVars(geom_variables)
                     error('Y point given exceeds the maximum grid points available')
             else:
                 if fourdarray[i] >= geom_variables['Nz']:
-                    print('\n  ! The 4D array input is invalid')
+                    print '\n  ! The 4D array input is invalid'
                     printGeoVars(geom_variables)
                     error('Z point given exceeds the maximum grid points available')
     
@@ -198,7 +198,7 @@ def writeASCIIfile(data, directory):
 
     file.close()
     
-    print('Boom, the ASCII is done.')
+    print 'Boom, the ASCII is done.'
     
     return 0
     
@@ -303,7 +303,7 @@ def writeASCIIfile_general(data, directory):
 
     file.close()
     
-    print('Boom, the ASCII is done.')
+    print 'Boom, the ASCII is done.'
     
     return 0
     

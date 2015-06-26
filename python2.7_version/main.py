@@ -106,7 +106,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
     
     ut.printSectionHeader()
     ut.printSectionTitle('Calculation Time')
-    print('   ', datetime.now() - startTime, '\n')
+    print '   ', datetime.now() - startTime, '\n'
 
     return
 

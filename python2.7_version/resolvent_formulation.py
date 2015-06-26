@@ -156,7 +156,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             if kx[ikx] == 0 or kz[ikz] == 0:
                 continue
             
-            print('kx:',kx[ikx],'    kz:',kz[ikz], '    A:',amplitude)
+            print 'kx:',kx[ikx],'    kz:',kz[ikz], '    A:',amplitude
             
             
             # Calculate the temporal frequency
@@ -227,7 +227,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             if modesOnly:
                 u_tilde = amplitude * resolvent_modes
             else:
-                u_tilde = sigma.T * scalars * resolvent_modes
+                u_tilder = sigma.T * scalars * resolvent_modes
             
             
             # Convert the resolvent modes to physical space
@@ -247,7 +247,14 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             # U += (sigma[0] * scalars[0,:,:] * physical_ff[0,:,:])
             #
             # Generated flow field
-
+            if modesOnly:
+                if laminarOnly:
+                    U = laminar_baseflow
+                else:
+                    U += physical_ff
+                
+            else:
+                U += physical_ff
         
         
         fmt = '{0:<20} {1:<20}'
@@ -312,6 +319,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     gen_ff['kz'] = string_kz
     gen_ff['c'] = string_c
     gen_ff['A'] = string_A
+    gen_ff['lam'] = lam
     
     
     return gen_ff

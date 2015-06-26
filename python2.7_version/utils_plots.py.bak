@@ -312,7 +312,7 @@ def plot3D(flow_field, four_d_array, geo, verbosity, quiv, contur):
     set0 = set(plane_0["ax0_coords"])
     set1 = set(plane_0["ax1_coords"])
     set2 = set(plane_0["ax2_coords"])
-    print(set1)
+    print set1
     plane_0["ax0_coords"] = list(set0)
     plane_0["ax1_coords"] = list(set1)
     plane_0["ax2_coords"] = list(set2)
