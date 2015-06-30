@@ -134,7 +134,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
                             32, 
                             # levels 
                             # [-1, -0.1, 0, 0.1], #alpha=0.5, 
-                            cmap=cm.coolwarm, 
+                            cmap=cm.seismic, 
                             origin=origin)
             
         xticks = np.linspace(axis_x[0], axis_x[-1], 6)
@@ -195,7 +195,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
                           data_to_plot, 
                           100, # levels
                           # [-1, -0.1, 0, 0.1], #alpha=0.5,
-                          cmap=cm.coolwarm,
+                          cmap=cm.seismic,
                           origin=origin)
     
     
@@ -275,9 +275,16 @@ def plot2D(data_slice):
 #            data_slice['vel_data'][i,j] = (data_slice['vel_data'][i,j] - min_vel) / (delta)
 #            
 
-    plane_image = plt.imshow(data_slice['contourData'])
-    plane_image.set_cmap('coolwarm')
-    plt.colorbar()
+
+    origin = 'lower'
+    CS = plt.contourf(x, 
+                      y, 
+                      data_slice['contourData'].T, 
+                      100, # levels
+                      # [-1, -0.1, 0, 0.1], #alpha=0.5,
+                      cmap=cm.seismic,
+                      origin=origin)
+
     
     # Plot text
     plt.xlabel(data_slice['axis_0_title'])
@@ -286,6 +293,7 @@ def plot2D(data_slice):
     # the first two value are the x-axis limits 
     # and then the next two values are the y-axis limits
 #    plt.axis([0, data_slice['max_0']-1, 0, data_slice['max_1']-1])
+    
     
     # Plot grid 
     plt.grid(True)
@@ -336,8 +344,8 @@ def plot3D(flow_field, four_d_array, geo, verbosity, quiv, contur):
 
 def plotMatrix(matrix):
     f, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.imshow(np.real(matrix), cmap=cm.coolwarm)
-    ax2.imshow(np.imag(matrix), cmap=cm.coolwarm)
+    ax1.imshow(np.real(matrix), cmap=cm.seismic)
+    ax2.imshow(np.imag(matrix), cmap=cm.seismic)
     return
     
 def simplePlot(X, Y):

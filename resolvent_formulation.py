@@ -56,7 +56,6 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                       
     """
 
-    # TIDY THIS FUNCTION
         
     # Geometric considerations:
     channel_half_height = 1.0
@@ -65,7 +64,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     if modesOnly:
         # Can use independent geometrical values
         Nx = 80
-        Nz = 70
+        Nz = 60
         
         Lx = 2.0*math.pi
         Lz = 2.0*math.pi
@@ -123,7 +122,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     # we get
     # Ubulk = 4/3
 
-    t = 1  # run-time
+    t = 0  # run-time
     m = N - 2 # number of modes
     
     # Initialize an object array to store the generated modes for each
@@ -143,11 +142,20 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     elif modesOnly:
         scalars = np.ones((len(kx), 3.0*m, len(kz)), dtype=np.complex128)
     
-        
+    
+    physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
+    generated_ff = np.zeros((len(x), 3*m, len(z)))
 
     # Amplitudes
-    # A = sigma * khai
-    amplitude = 1.0e-5
+    # A = sigma * khi
+    amplitude = 1.0e-2
+    # I will be going through the following list of amplitudes:
+    # 1e0
+    # 1e-2
+    # 1e-4
+    # 1e-8
+    # 1e-12
+    
     
     
     for ikx in range(0, len(kx)):
@@ -196,7 +204,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             #      A: w.T
             #      x: resolvent modes
             #      b: U_spectral
-            resolvent_modes = solve(w.T, U_spectral) # Make sure you disassociate the modes from the clencurt quadrature.
+            resolvent_modes = solve(w.T, U_spectral)
             
             
             ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
@@ -234,10 +242,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
 
 
-            # Rank of resolvent modes, this can be lowered to use less of the 
-            # modes to calculate the physical flow field.
-            num_modes = 1000
+            # Number of resolvent modes to use
+            num_modes = 1.0e5
             num_modes = min(num_modes, 3*m)
+            
             for iy in range(0, num_modes):
                 physical_ff += ifft(u_tilde[:,iy], kx[ikx], kz[ikz], omega, x, z, t, Lx, Lz)
                 
@@ -246,11 +254,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
             # which contains (u,v,w)
             # U += (sigma[0] * scalars[0,:,:] * physical_ff[0,:,:])
             #
-            # Generated flow field
+            # Generated flow field is just the physical_ff
+            generated_ff += physical_ff.real
 
         
-        
-        fmt = '{0:<20} {1:<20}'
         string_kx = str(kx[ikx])
         string_kz = str(kz[ikz])
         string_c = format(c, '.4f')
@@ -259,7 +266,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
 
 
     U=0
-    U = physical_ff.real
+    U = generated_ff
 #    U = f
     U_u = U[:,   0:m  , :]
     U_v = U[:,   m:2*m, :]
@@ -315,30 +322,6 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
     
     
     return gen_ff
-
-
-
-def chebyshev_points(N, a, b):
-    """
-    INPUTS:
-    N:  number of grid points
-    a:  upper bound of domain
-    b:  lower bound of domain
-    
-    OUTPUTS:
-    y:  Chebyshev points
-    """
-
-    y_chebheb = np.arange(N, dtype=np.float)
-    pi_N = math.pi / (N - 1.0)
-    radius = (b - a) / 2.0
-    center = (b + a) / 2.0
-    for j in range(0,N):
-        tmp0=j*pi_N
-        tmp1=math.cos(j*pi_N)
-        y_chebheb[j] = center + radius*tmp1
-    
-    return y_chebheb
 
 
 
@@ -476,23 +459,22 @@ def ifft(fft_signal, kx, kz, omega, x, z, t, Lx, Lz):
     OUTPUT:
      signal : spectral signal
     """
-    
-    kx *= (2.0 * math.pi) / Lx
-    kz *= (2.0 * math.pi) / Lz
+#    print('FOURIER')
+#    for i in range(0, len(fft_signal)):
+#        string = str(fft_signal[i].real) + '+' + str(fft_signal[i].imag) + 'j'
+#        print(string)
+#        tmp = fft_signal[i]
+#        
+#    print('')
     
     
     signal = np.zeros((len(x), len(fft_signal), len(z)), dtype=np.complex128)
     
-
-    for i_z in range(0, z.shape[0]):
-        for i_x in range(0, x.shape[0]):
-            exp_component = np.exp(1j * ((kx * x[i_x]) + (kz * z[i_z]) - (omega * t)))
-            a = fft_signal[:]
-            b = a * exp_component
-            b = np.squeeze(b)
-            signal[i_x, :, i_z] = b
-            
-    
+    for iz in range(0, z.shape[0]):
+        for ix in range(0, x.shape[0]):
+            expo = np.exp(1j * (((2.0*math.pi * kx * x[ix])/Lx) + ((2.0*math.pi * kz * z[iz])/Lz) - (omega * t)))
+            signal[ix, :, iz] = fft_signal * np.exp(1j * (((2.0*math.pi * kx * x[ix])/Lx) + ((2.0*math.pi * kz * z[iz])/Lz) - (omega * t)))
+    signal = signal.real
     return signal
 
 
@@ -525,21 +507,21 @@ def fft(signal, kx, kz, c, x, z, t, Lx, Lz):
     
 #    fft_signal = np.zeros((len(x), len(z)), dtype=np.complex128)# shape could simply be put as signal.shape
 
-#    for i_z in range(0, len(signal)):
-#        for i_x in range(0, x.shape[0]):
-#            exp_component = np.exp(1j * ((kx * x[i_x]) + (kz * z[i_z]) - (omega * t)))
-#            a = signal[:, i_z]
+#    for iz in range(0, len(signal)):
+#        for ix in range(0, x.shape[0]):
+#            exp_component = np.exp(1j * ((kx * x[ix]) + (kz * z[iz]) - (omega * t)))
+#            a = signal[:, iz]
 #            b = a * exp_component[0,0]
 #            b = np.squeeze(b)
-#            fft_signal[i_x, :, i_z] = b
+#            fft_signal[ix, :, iz] = b
 
-    for i_z in range(0, len(z)):
-        for i_x in range(0, len(x)):
-            exp_component = np.exp(-1j * ((kx * x[i_x]) + (kz * z[i_z]) - (omega * t)))
+    for iz in range(0, len(z)):
+        for ix in range(0, len(x)):
+            exp_component = np.exp(-1j * ((kx * x[ix]) + (kz * z[iz]) - (omega * t)))
             a = signal[:, :]
             b = a * exp_component * delta_x * delta_z
             b = np.squeeze(b)
-            fft_signal[i_x, :, i_z] = b
+            fft_signal[ix, :, iz] = b
     
     
     reciprocal = (1.0 / (Lx * Lz))
@@ -549,10 +531,8 @@ def fft(signal, kx, kz, c, x, z, t, Lx, Lz):
     
     return fft_signal2
 
-def fft_flowField(data):
-    
-    return data
-    
+
+
 
 def get_scalars(u_hat, resolvent_modes, w):
 

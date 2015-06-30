@@ -57,14 +57,35 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
     data = {}
     
     modesOnly = False
-    perturbed = True
+    perturbed = False
 
 
+    
+    
     
     if directory == '':
         ut.printSectionHeader()
         ut.printSectionTitle('We will be generating our own modes!')
         modesOnly = True
+        
+        
+        # Resolvent Formulation
+        generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
+        up.plot2D_modes(generated_flowField, fourdarray, True)
+        
+        
+        generated_flowField['read']=False
+        if perturbed:
+            perturbedField = ut.perturbFlowField(generated_flowField)
+            up.plot2D_modes(perturbedField, fourdarray, True)
+        
+        directory = '/home/arslan/Desktop'
+        directory = ut.makeSolutionDirectory(generated_flowField, directory)
+        ut.writeASCIIfile(generated_flowField, directory)
+        ut.writeGEOMfile(generated_flowField, directory)
+        
+        
+        
         
     else:
         ut.printSectionHeader()
@@ -86,24 +107,10 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
             perturbedField = ut.perturbFlowField(data)
             ut.writeASCIIfile_general(perturbedField, directory)
             perturbed_slice = rc.get_vel_slice()##
-            up.plot2D(perturbedField)
+            up.plot2D(perturbed_slice)
 
-    # Resolvent Formulation
-    generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
-    up.plot2D_modes(generated_flowField, fourdarray, True)
-    
-    generated_flowField['read']=False
-    if perturbed:
-        perturbedField = ut.perturbFlowField(generated_flowField)
-        up.plot2D_modes(perturbedField, fourdarray, True)
-    
-    # Write ASCII and geom file for channelflow
-    if directory == '':
-        directory = '/home/arslan/Desktop'
-        directory = ut.makeSolutionDirectory(perturbedField, directory)
-        ut.writeASCIIfile(perturbedField, directory)
-        ut.writeGEOMfile(perturbedField, directory)
-    
+
+
     ut.printSectionHeader()
     ut.printSectionTitle('Calculation Time')
     print('   ', datetime.now() - startTime, '\n')
@@ -121,23 +128,18 @@ if mac:
     direct = '/Users/arslan/Documents/phd/code/channelflow_solns/nagata1'
     
 elif linux:
-#    direct = '/home/arslan/Documents/phd/code/channelflow-1.4.2/solutions/equilibria/nagata1'
-#    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4'
-#    direct ='home/arslan/ubest'
-#    direct ='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4/nonlinear_solver/perturbed'
-#    direct ='/home/arslan/Documents/work/channelflow-related/chflow_wavepackets/laminar'
-     direct = '/home/arslan/Desktop'
+    direct = '/home/arslan/Documents/work/channelflow-related/tutorial_invariant_solns/test01'
     
 else:
     direct = ''
     
     
-n = 42
+n = 52
 re = 400
 kx = np.array([1])
-kz = np.array([-4,4])
-#kz = np.arange(-1,2) #(-8, to 8)
-c = 2.0 / 3.0
+#kz = np.array([1])
+kz = np.arange(-1,2) #(-8, to 8)
+c = 2./3.
 fdary = [0, 'all', 'all', 0]
 
 main(direct, fdary, n, re, kx, kz, c)
