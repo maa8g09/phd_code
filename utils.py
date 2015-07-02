@@ -244,7 +244,7 @@ def makeSolutionDirectory(data, directory):
     c = data['c']
     A = data['A']
     
-    folderName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+    folderName = "/triplet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
     
     directory = directory + folderName
     

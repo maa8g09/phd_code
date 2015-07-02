@@ -243,7 +243,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
 
 
             # Number of resolvent modes to use
-            num_modes = 1.0e5
+            num_modes = 1
             num_modes = min(num_modes, 3*m)
             
             for iy in range(0, num_modes):
@@ -291,7 +291,6 @@ def main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray):
                         U[i, nx, ny, nz] = U_u[nx, ny, nz]
                     elif i == 1: # v direction
                         U[i, nx, ny, nz] = U_v[nx, ny, nz]
-                    
                     elif i == 2: # w direction
                         U[i, nx, ny, nz] = U_w[nx, ny, nz]
                         
