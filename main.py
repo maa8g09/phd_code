@@ -24,7 +24,7 @@ import resolvent_formulation as rf
 from datetime import datetime
 
 
-def main(directory, fourdarray, N, Re, kx, kz, c):
+def main(directory, fourdarray, N, Re, kx, kz, c, A):
     """
     INPUTS:
      directory:  directory where the flow solution is kept (downloaded from 
@@ -40,6 +40,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
             kx:  vector of streamwise wavenumbers
             kz:  vector of spanwise wavenumbers
              c:  phase speed
+             A:  amplitude
     
     
     OUTPUTS:
@@ -70,7 +71,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
         
         
         # Resolvent Formulation
-        generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, modesOnly, data, fourdarray)
+        generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray)
         up.plot2D_modes(generated_flowField, fourdarray, True)
         
         
@@ -79,7 +80,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
             perturbedField = ut.perturbFlowField(generated_flowField)
             up.plot2D_modes(perturbedField, fourdarray, True)
         
-        directory = '/home/arslan/Desktop'
+        directory = '/home/arslan/Documents'
         directory = ut.makeSolutionDirectory(generated_flowField, directory)
         ut.writeASCIIfile(generated_flowField, directory)
         ut.writeGEOMfile(generated_flowField, directory)
@@ -109,6 +110,14 @@ def main(directory, fourdarray, N, Re, kx, kz, c):
             perturbed_slice = rc.get_vel_slice()##
             up.plot2D(perturbed_slice)
 
+        # Resolvent Formulation
+        generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray)
+        up.plot2D_modes(generated_flowField, fourdarray, True)
+        
+        directory = '/home/arslan/Documents'
+        directory = ut.makeSolutionDirectory(generated_flowField, directory)
+        ut.writeASCIIfile(generated_flowField, directory)
+        ut.writeGEOMfile(generated_flowField, directory)
 
 
     ut.printSectionHeader()
@@ -129,18 +138,18 @@ if mac:
     
 elif linux:
     direct = '/home/arslan/Documents/work/channelflow-related/tutorial_invariant_solns/test01'
-    
+    direct = '/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq7'
 else:
     direct = ''
     
     
-n = 52
+n = 32
 re = 400
-kx = np.array([1])
-#kz = np.array([1])
-kz = np.arange(-1,2) #(-8, to 8)
+kx = np.arange(1,2)
+kz = np.arange(-1,2)
 c = 2./3.
-fdary = [0, 'all', 'all', 0]
+fdary = [0, 0, 'all', 'all']
+A = 1.0e0
 
-main(direct, fdary, n, re, kx, kz, c)
+main(direct, fdary, n, re, kx, kz, c, A)
 
