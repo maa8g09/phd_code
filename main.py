@@ -23,8 +23,9 @@ import utils_plots as up
 import resolvent_formulation as rf
 from datetime import datetime
 
+startTimeLarge = datetime.now()
 
-def main(directory, fourdarray, N, Re, kx, kz, c, A):
+def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
     """
     INPUTS:
      directory:  directory where the flow solution is kept (downloaded from 
@@ -80,8 +81,8 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A):
             perturbedField = ut.perturbFlowField(generated_flowField)
             up.plot2D_modes(perturbedField, fourdarray, True)
         
-        directory = '/home/arslan/Documents'
-        directory = ut.makeSolutionDirectory(generated_flowField, directory)
+        directory = '/home/arslan/Documents/work/channelflow-related/edge_state_varying_amplitude4'
+        directory = ut.makeSolutionDirectory(generated_flowField, directory, n, re, kx, kz, c, A, i)
         ut.writeASCIIfile(generated_flowField, directory)
         ut.writeGEOMfile(generated_flowField, directory)
         
@@ -103,21 +104,21 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A):
         if data['flowField']['is_physical'] == True:
             up.plot2D(data['velslice'])
 
-        if perturbed:
-            data['read']=True
-            perturbedField = ut.perturbFlowField(data)
-            ut.writeASCIIfile_general(perturbedField, directory)
-            perturbed_slice = rc.get_vel_slice()##
-            up.plot2D(perturbed_slice)
+#        if perturbed:
+#            data['read']=True
+#            perturbedField = ut.perturbFlowField(data)
+#            ut.writeASCIIfile_general(perturbedField, directory)
+#            perturbed_slice = rc.get_vel_slice()##
+#            up.plot2D(perturbed_slice)
 
-        # Resolvent Formulation
-        generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray)
-        up.plot2D_modes(generated_flowField, fourdarray, True)
-        
-        directory = '/home/arslan/Documents'
-        directory = ut.makeSolutionDirectory(generated_flowField, directory)
-        ut.writeASCIIfile(generated_flowField, directory)
-        ut.writeGEOMfile(generated_flowField, directory)
+#        # Resolvent Formulation
+#        generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray)
+#        up.plot2D_modes(generated_flowField, fourdarray, True)
+#        
+#        directory = '/home/arslan/Documents'
+#        directory = ut.makeSolutionDirectory(generated_flowField, directory)
+#        ut.writeASCIIfile(generated_flowField, directory)
+#        ut.writeGEOMfile(generated_flowField, directory)
 
 
     ut.printSectionHeader()
@@ -137,19 +138,35 @@ if mac:
     direct = '/Users/arslan/Documents/phd/code/channelflow_solns/nagata1'
     
 elif linux:
-    direct = '/home/arslan/Documents/work/channelflow-related/tutorial_invariant_solns/test01'
-    direct = '/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq7'
+    direct = '/home/arslan/Documents/work/channelflow-related/edge_state_varying_amplitude/triplet_+-1_+-1_0.6667_0.1/unewt8'
+    
 else:
     direct = ''
     
-    
-n = 32
-re = 400
-kx = np.arange(1,2)
-kz = np.arange(-1,2)
-c = 2./3.
-fdary = [0, 0, 'all', 'all']
-A = 1.0e0
 
-main(direct, fdary, n, re, kx, kz, c, A)
+n = 35
+re = 1800
 
+# Ideal Packet
+kx_a = np.arange(6,7) #6
+kx_b = np.arange(1,2) #1
+kx = np.array([kx_a, kx_b])
+
+kz_a = np.arange(-6,7)
+kz_b = np.arange(-6,7)
+kz = np.array([kz_a, kz_b])
+
+amplitude_a = 1.0j
+amplitude_b = -4.5
+amplitudes = np.array([amplitude_a, amplitude_b])
+
+c = 2.0/3.0
+fdary = [0, 'all', 'all', 0]
+ampl_weights = np.logspace(-0.1, -3.0, num=10)
+#amplitudes = [1.0j]
+for i in range(0, len(ampl_weights)):
+    main(direct, fdary, n, re, kx, kz, c, amplitudes*ampl_weights[i], i)
+
+#main(direct, fdary, n, re, kx, kz, c, amplitudes, 0)
+
+print('   ', datetime.now() - startTimeLarge, '\n')

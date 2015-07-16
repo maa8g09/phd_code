@@ -16,6 +16,7 @@ Author details:
 """
 
 import tools_pseudospectral as ps
+import utils as ut
 import utils_plots as up
 import math
 import numpy as np
@@ -64,8 +65,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     
     if modesOnly:
         # Can use independent geometrical values
-        Nx = 60
-        Nz = 80
+        Nx = 32
+        Nz = 32
         
         Lx = 2.0*math.pi
         Lz = 2.0*math.pi
@@ -133,11 +134,11 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     
     # Initialize an object array to store the generated modes for each
     # wavenumber phase speed combination
-    mode = np.zeros((3.0*m, len(kx), len(kz)), dtype=np.complex128)
+    #mode = np.zeros((3.0*m, len(kx), len(kz)), dtype=np.complex128)
     
     # Initialize a 3D matrix for keeping track of the first 
     # singular value per mode
-    singular_value = np.zeros((len(kx), len(kz)))
+    #singular_value = np.zeros((len(kx), len(kz)))
     
     
     # Scalars
@@ -148,6 +149,14 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
 #    elif modesOnly:
 #        scalars = np.ones((len(kx), 3.0*m, len(kz)), dtype=np.complex128)
 #    
+    if not modesOnly:
+        if data['flowField']['is_physical'] == True:
+            alpha = data['geometry']['physical']['alpha']
+            beta = data['geometry']['physical']['gamma']
+    else:
+        alpha = 1.0
+        beta = 1.0
+    
     scalars = 0
     
     physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
@@ -157,158 +166,153 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     # A = S * khi
     amplitude = A
 
-    
-    for ikx in range(0, len(kx)):
-        for ikz in range(0, len(kz)):
-            # account for kx = kz = 0 (turbulent mean)
-            if kx[ikx] == 0 or kz[ikz] == 0:
-                continue
-            
-            print('kx:',kx[ikx],'    kz:',kz[ikz], '    A:',amplitude)
-            
-            
-            # Calculate the temporal frequency
-            omega = 2.0*math.pi*kx[ikx]/Lx * c
-            
-            
-            # Get the state vectors so that you can compute the resolvent operator
-            # and hence the transfer function.
-            # 
-            # The calculations given below (and variable names) are outlined in:
-            #     Moarref, Model-based scaling of the streamwise energy 
-            #     density in high-Reynolds number turbulent channels, 2013.
-            
-            if not modesOnly:
-                if data['flowField']['is_physical'] == True:
-                    alpha = data['geometry']['physical']['alpha']
-                    beta = data['geometry']['physical']['gamma']
-            else:
-                alpha = 1.0
-                beta = 1.0
-            
-            C, C_adj, A, w, y_cheb = get_state_vectors(N, Re, Lx, Lz, 
-                                                       kx[ikx]*alpha,
-                                                       kz[ikz]*beta)
-            
-            I = np.eye(A.shape[0])
-            # The resolvent of state operator A
-            L = -1j*omega*I - A
-            RA = inv(L)
-            
-            
-            # Transfer function
-            H = C*RA*C_adj
-            
-#            
-#            Hreal = H.real
-#            Himag = H.imag
-#            
-#            fileName='/Hreal.txt'
-#            file = open('/home/arslan/Documents' + fileName, "w")
-#            for i in range(0, Hreal.shape[0]):
-#                tmp = Hreal[i,:]#take each row
-#                for q in range(0, tmp.shape[1]):#write each element
-#                    tmp0 = str(tmp[0,q])
-#                    file.write(tmp0 + " ")
-#                file.write("\n")
-#            file.close()
-#            
-#            fileName='/Himag.txt'
-#            file = open('/home/arslan/Documents' + fileName, "w")
-#            for i in range(0, Hreal.shape[1]):
-#                tmp = Himag[i,:]#take each row
-#                for q in range(0, tmp.shape[1]):#write each element
-#                    tmp0 = str(tmp[0,q])
-#                    file.write(tmp0 + " ")
-#                file.write("\n")
-#            file.close()
-#            
-            
-            
-            # Perform SVD on the resolvent operator (R_A) to get the forcing, 
-            # singluar and response modes. This also gives a flow field 
-            # in spectral space.
-            # 
-            #   U_spectral: response modes in fourier space (resolvent modes)
-            #            S: signular values
-            #   V_spectral: forcing modes in fourier space
-            #
-            # In matlab U S V  = svd(H)
-            # In python U S Vh = svd(H), where V = Vh.T
-            #
-            U_spectral, S, V_spectral = svd(H)
-            V_spectral = V_spectral.T
-#            
-#            U_spectralreal=U_spectral.real
-#            U_spectralimag=U_spectral.imag
-            
-            # Solve linear equation to recover the velocities
-            #     Ax = b
-            #      A: w.T (Clencurt vector has been converted to a diagonal matrix)
-            #      x: resolvent modes
-            #      b: U_spectral
-            resolvent_modes = solve(w.T, U_spectral)
-            
-            
-            
-            # Store the generated modes and the first singular values
-            # for each wavenumber triplet.
-            # take the first column of the resolvent modes
-            mode[:, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
-            singular_value[ikx, ikz] = S[0]
-            
-            
-            nrm = np.linalg.norm(resolvent_modes[:, 0])
-            mx = max(resolvent_modes[:, 0])
-            
-            
-            # Calculate u_tilde
-            if modesOnly:
-                tmp= w * resolvent_modes[:, 0]
-                u_tilde = amplitude * np.diag(tmp)
-#                u_tilde = amplitude * resolvent_modes[:, 0]
-                
-            else:
-                # To get the weighting we can use the scalars that I can 
-                # get from Gibson's solutions.
-                # Otherwise I use a constant coefficient as the weighting
-                # factor.
-                scalars = get_scalars(u_hat[ikx, :, ikz], resolvent_modes[:, 0], w)
-                amplitude = np.asmatrix(S[0]) * np.asmatrix(scalars).T
-                u_tilde = amplitude[0,0] * resolvent_modes
-            
-            
-            u_tilde += np.conjugate(u_tilde)
-            
-            # add the complex conjugate of u_tilde to u_tilde before you inverse fourier it.
-            # alternatively we could add the complex conjugate after the physical flowfield has been 
-            # generated.
-            
-            u_tilde = np.asmatrix(u_tilde).T
-            # Convert the resolvent modes to physical space
-            physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-
-
-            # Number of resolvent modes to use
-            num_modes = 1
-            num_modes = min(num_modes, 3*m)
-            
-            for iy in range(0, num_modes):
-                physical_ff += ifft(u_tilde[:,iy], kx[ikx], kz[ikz], c, x, z, t, Lx, Lz, m)
-                
-            
-            # Generated flow field is the velocity vector U
-            # which contains (u,v,w)
-            # U += (S[0] * scalars[0,:,:] * physical_ff[0,:,:])
-            #
-            # Generated flow field is just the physical_ff
-            generated_ff += physical_ff.real
-
+    for mode_num in range(0, kx.shape[0]):
+        # the number of modes we are generating to create a packet
+        # So we will loop through each set of modes...
+        kx_mode_num = kx[mode_num, :]
+        kz_mode_num = kz[mode_num, :]
         
-        string_kx = str(kx[ikx])
-        string_kz = str(kz[ikz])
-        string_c = format(c, '.4f')
-        string_A = str(amplitude)
+        for ikx in range(0, len(kx_mode_num)):
+            for ikz in range(0, len(kz_mode_num)):
+                # account for kx = kz = 0 (turbulent mean)
+                if kx_mode_num[ikx] == 0 or kz_mode_num[ikz] == 0:
+                    continue
+                
+                print('kx:',kx_mode_num[ikx],'    kz:',kz_mode_num[ikz], '    A:',amplitude[mode_num])
+                
+                
+                # Calculate the temporal frequency
+                omega = 2.0*math.pi*kx_mode_num[ikx]/Lx * c
+                
+                
+                # Get the state vectors so that you can compute the resolvent operator
+                # and hence the transfer function.
+                # 
+                # The calculations given below (and variable names) are outlined in:
+                #     Moarref, Model-based scaling of the streamwise energy 
+                #     density in high-Reynolds number turbulent channels, 2013.
+                
+    
+                C, C_adj, A, w, y_cheb = get_state_vectors(N, Re, Lx, Lz, 
+                                                           kx_mode_num[ikx]*alpha,
+                                                           kz_mode_num[ikz]*beta)
+                
+                I = np.eye(A.shape[0])
+                # The resolvent of state operator A
+                L = -1j*omega*I - A
+                RA = inv(L)
+                
+                
+                # Transfer function
+                H = C*RA*C_adj
+                
+                # Transfer function testing output...
+                Hreal = H.real
+                Himag = H.imag
+                
+                fileName='/Hreal.txt'
+                file = open('/home/arslan/Documents' + fileName, "w")
+                for i in range(0, Hreal.shape[0]):
+                    tmp = Hreal[i,:]#take each row
+                    for q in range(0, tmp.shape[1]):#write each element
+                        tmp0 = str(tmp[0,q])
+                        file.write(tmp0 + " ")
+                    file.write("\n")
+                file.close()
+                
+                fileName='/Himag.txt'
+                file = open('/home/arslan/Documents' + fileName, "w")
+                for i in range(0, Hreal.shape[1]):
+                    tmp = Himag[i,:]#take each row
+                    for q in range(0, tmp.shape[1]):#write each element
+                        tmp0 = str(tmp[0,q])
+                        file.write(tmp0 + " ")
+                    file.write("\n")
+                file.close()
+                
+                
+                
+                # Perform SVD on the resolvent operator (R_A) to get the forcing, 
+                # singluar and response modes. This also gives a flow field 
+                # in spectral space.
+                # 
+                #   U_spectral: response modes in fourier space (resolvent modes)
+                #            S: signular values
+                #   V_spectral: forcing modes in fourier space
+                #
+                # In matlab U S V  = svd(H)
+                # In python U S Vh = svd(H), where V = Vh.T
+                #
+                U_spectral, S, V_spectral = svd(H)
+                
+                if np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H) >= 1e-10:
+                    nrm = str(np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H))
+                    err = 'Something went wrong with the SVD, norm is '+nrm
+                    ut.error(err)
+                    
+                
+                # Solve linear equation to recover the velocities
+                #     Ax = b
+                #      A: w.T (Clencurt vector has been converted to a diagonal matrix)
+                #      x: resolvent modes
+                #      b: U_spectral
+                resolvent_modes = solve(w.T, U_spectral)
+                
+                
+                # Store the generated modes and the first singular values
+                # for each wavenumber triplet.
+                # take the first column of the resolvent modes
+                #mode[:, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
+                #singular_value[ikx, ikz] = S[0]
+                
+                
+                # Calculate u_tilde
+                if modesOnly:
+                    tmp= w * resolvent_modes[:, 0]
+                    u_tilde = amplitude[mode_num] * resolvent_modes[:, 0] # np.diag(tmp)
+    #                u_tilde = amplitude * resolvent_modes[:, 0]
+                    
+                else:
+                    # To get the weighting we can use the scalars that I can 
+                    # get from Gibson's solutions.
+                    # Otherwise I use a constant coefficient as the weighting
+                    # factor.
+                    scalars = get_scalars(u_hat[ikx, :, ikz], resolvent_modes[:, 0], w)
+                    amplitude = np.asmatrix(S[0]) * np.asmatrix(scalars).T
+                    u_tilde = amplitude[0,0] * resolvent_modes
+                
+                
+                u_tilde += np.conjugate(u_tilde)
+                
+                # add the complex conjugate of u_tilde to u_tilde before you inverse fourier it.
+                # alternatively we could add the complex conjugate after the physical flowfield has been 
+                # generated.
+                
+                u_tilde = np.asmatrix(u_tilde)
+                # Convert the resolvent modes to physical space
+                physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
+    
+    
+                # Number of resolvent modes to use
+                num_modes = 1
+                num_modes = min(num_modes, 3*m)
+                
+                for iy in range(0, num_modes):
+                    physical_ff += ifft(u_tilde[:,iy], kx_mode_num[ikx], kz_mode_num[ikz], c, x, z, t, Lx, Lz, m)
+                    
+                
+                # Generated flow field is the velocity vector U
+                # which contains (u,v,w)
+                # U += (S[0] * scalars[0,:,:] * physical_ff[0,:,:])
+                #
+                # Generated flow field is just the physical_ff
+                generated_ff += physical_ff.real
+    
+            
+            string_kx = str(kx_mode_num[ikx])
+            string_kz = str(kz_mode_num[ikz])
+            string_c = format(c, '.4f')
+            string_A = str(amplitude[mode_num])
         
 
     

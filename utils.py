@@ -54,7 +54,7 @@ def error(str):
     print('!!!!====!!!!====!!!!====!!!!====!!!!====')
     print('ERROR:', str)
     print('!!!!====!!!!====!!!!====!!!!====!!!!====')
-    print('\n\n\n')
+    print('\n')
     print('  ______    ______   __       __  ________       ')
     print(' /      \  /      \ |  \     /  \|        \      ')
     print('|  $$$$$$\|  $$$$$$\| $$\   /  $$| $$$$$$$$      ')
@@ -74,6 +74,11 @@ def error(str):
     print('| $$__/ $$   \$$ $$  | $$_____ | $$  | $$        ')
     print(' \$$    $$    \$$$   | $$     \| $$  | $$        ')
     print('  \$$$$$$      \$     \$$$$$$$$ \$$   \$$        ')
+    print('\n')
+    print('!!!!====!!!!====!!!!====!!!!====!!!!====')
+    print('ERROR:', str)
+    print('!!!!====!!!!====!!!!====!!!!====!!!!====')
+    print('\n\n')
     sys.exit('')
     return
     
@@ -184,6 +189,7 @@ def writeASCIIfile(data, directory):
     flowField = data['resolvent_flowField']
     
     fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".asc"
+    fileName = "/u0.asc"
     
     file = open(directory + fileName, "w")
     
@@ -210,7 +216,8 @@ def writeGEOMfile(data, directory):
     c = data['c']
     A = data['A']
     
-    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".geom"
+#    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".geom"
+    fileName = "/u0.geom"
     
     file = open(directory + fileName, "w")
     
@@ -238,19 +245,48 @@ def writeGEOMfile(data, directory):
     return 0
     
     
-def makeSolutionDirectory(data, directory):
-    kx = data['kx']
-    kz = data['kz']
-    c = data['c']
-    A = data['A']
+def makeSolutionDirectory(data, directory, n, re, kx, kz, c, amplitudes, i):
+
     
-    folderName = "/triplet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
     
+    if kx.shape[0] > 1:
+        i = str(i).zfill(3)
+        folderName = "/wavepacket_" + str(i) + "_" + str(kx.shape[0]) + "modes_" + str(amplitudes[0])
+        
+    else:
+        kx = data['kx']
+        kz = data['kz']
+        c = data['c']
+        A = data['A']
+        i = str(i).zfill(3)
+        
+        if kx[0][0] < 0:
+            folderName = "/triplet_case_"+ str(i) +"_" + "+-" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+        else:
+            folderName = "/triplet_case_"+ str(i) +"_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+        
     directory = directory + folderName
     
     
     if not os.path.exists(directory):
         os.makedirs(directory)
+        
+    fileName = '/details.txt'
+    file = open(directory + fileName, "w")
+    file.write('n'+ "\n")
+    file.write(str(n)+ "\n"+ "\n")
+    file.write('Re'+ "\n")
+    file.write(str(re)+ "\n"+ "\n")
+    file.write('kx'+ "\n")
+    file.write(str(kx)+ "\n"+ "\n")
+    file.write('kz'+ "\n")
+    file.write(str(kz)+ "\n"+ "\n")
+    file.write('c'+ "\n")
+    file.write(str(c)+ "\n"+ "\n")
+    file.write('amplitudes'+ "\n")
+    file.write(str(amplitudes)+ "\n"+ "\n")
+    
+    file.close()
     
     return directory
     

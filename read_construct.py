@@ -369,7 +369,8 @@ def read_construct_flow_field(direc, dict_files, dict_geometry):
             nz = int(values[2])
             nd = int(values[3])
             vel = float(values[4])
-            
+            if vel <= 1e-8:
+                vel = 0.0
             U[nd, nx, ny, nz] = vel
             
         ut.message('Closing the physical ASCII file')
@@ -487,8 +488,6 @@ def get_data_slice(ff, four_d_array, var_geo):
         title = 'ZY plane at X: ' + str(four_d_array[1])
 
     elif four_d_array[2] != 'all': # XZ plane
-        # we transpose the matrices because otherwise we would be plotting
-        # X data on the y axis of the plot. 
         contour_data = U_mag[:, four_d_array[2], :]
         
         v0, v1 = get_other_vels(four_d_array[0])

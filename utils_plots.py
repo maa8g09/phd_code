@@ -295,6 +295,10 @@ def plot2D(data_slice):
 #    plt.axis([0, data_slice['max_0']-1, 0, data_slice['max_1']-1])
     
     
+        
+    cbar = plt.colorbar(CS)
+#    cbar.ax.set_ylabel(cbar_t)
+        
     # Plot grid 
     plt.grid(True)
     
