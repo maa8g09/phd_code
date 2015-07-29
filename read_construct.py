@@ -498,11 +498,11 @@ def get_data_slice(ff, four_d_array, var_geo):
         title = 'XZ plane at Y: ' + str(four_d_array[2])
         
     elif four_d_array[3] != 'all': # XY plane
-        contour_data = U_mag[:, :, four_d_array[3]]
+        contour_data = U_mag[:, :, four_d_array[3]].T
         
         v0, v1 = get_other_vels(four_d_array[0])
-        v0 = ff[v0, :, :, four_d_array[3]]
-        v1 = ff[v1, :, :, four_d_array[3]]
+        v0 = ff[v0, :, :, four_d_array[3]].T
+        v1 = ff[v1, :, :, four_d_array[3]].T
         a0, a0title = var_geo['x'], 'x'
         a1, a1title = var_geo['y'], 'y'
         title = 'XY plane at Z: ' + str(four_d_array[3])

@@ -81,7 +81,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
             perturbedField = ut.perturbFlowField(generated_flowField)
             up.plot2D_modes(perturbedField, fourdarray, True)
         
-        directory = '/home/arslan/Documents/work/channelflow-related/edge_state_varying_amplitude4'
+        directory = '/home/arslan/Documents/work/channelflow-related/edge_state_varying_amplitude_single_mode'
         directory = ut.makeSolutionDirectory(generated_flowField, directory, n, re, kx, kz, c, A, i)
         ut.writeASCIIfile(generated_flowField, directory)
         ut.writeGEOMfile(generated_flowField, directory)
@@ -144,26 +144,45 @@ else:
     direct = ''
     
 
-n = 35
-re = 1800
+n = 100
+re = 400
 
 # Ideal Packet
-kx_a = np.arange(6,7) #6
-kx_b = np.arange(1,2) #1
-kx = np.array([kx_a, kx_b])
+kx_a = np.arange(7) #6
+kx_b = np.arange(2) #1
+kx_c = np.arange(8)
+kx = np.array([kx_a, kx_b, kx_c])
 
 kz_a = np.arange(-6,7)
 kz_b = np.arange(-6,7)
-kz = np.array([kz_a, kz_b])
+kz_c = np.arange(-12,13)
+kz = np.array([kz_a, kz_b, kz_c])
 
 amplitude_a = 1.0j
 amplitude_b = -4.5
-amplitudes = np.array([amplitude_a, amplitude_b])
+amplitude_c = 0.83j
+amplitudes = np.array([amplitude_a, amplitude_b, amplitude_c])
+
+
+
+
+kx_a = np.arange(2)
+kx = np.array([kx_a])
+
+kz_a = np.arange(-6,7)
+kz = np.array([kz_a])
+
+
+
+#amplitude_a = 1.0
+#amplitude_b = 1.0
+#amplitudes = np.array([amplitude_a, amplitude_b])
 
 c = 2.0/3.0
 fdary = [0, 'all', 'all', 0]
-ampl_weights = np.logspace(-0.1, -3.0, num=10)
-#amplitudes = [1.0j]
+ampl_weights = np.logspace(-0.1, -2.0, num=5)
+#ampl_weights = np.array([1.0])
+
 for i in range(0, len(ampl_weights)):
     main(direct, fdary, n, re, kx, kz, c, amplitudes*ampl_weights[i], i)
 

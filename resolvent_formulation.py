@@ -65,8 +65,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     
     if modesOnly:
         # Can use independent geometrical values
-        Nx = 32
-        Nz = 32
+        Nx = 40
+        Nz = 30
         
         Lx = 2.0*math.pi
         Lz = 2.0*math.pi
@@ -134,30 +134,24 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     
     # Initialize an object array to store the generated modes for each
     # wavenumber phase speed combination
-    #mode = np.zeros((3.0*m, len(kx), len(kz)), dtype=np.complex128)
+#    mode = np.zeros((kx.shape[0], 3.0*m, len(kx), len(kz)), dtype=np.complex128)
     
     # Initialize a 3D matrix for keeping track of the first 
     # singular value per mode
-    #singular_value = np.zeros((len(kx), len(kz)))
+#    singular_value = np.zeros((kx.shape[0], len(kx), len(kz)))
     
     
-    # Scalars
-#    if not modesOnly:
-#        if data['flowField']['is_spectral']:
-#            scalars = np.zeros((len(x), 3.0*m, len(z)), dtype=np.complex128)
-#            
-#    elif modesOnly:
-#        scalars = np.ones((len(kx), 3.0*m, len(kz)), dtype=np.complex128)
-#    
+
     if not modesOnly:
         if data['flowField']['is_physical'] == True:
             alpha = data['geometry']['physical']['alpha']
             beta = data['geometry']['physical']['gamma']
     else:
-        alpha = 1.0
-        beta = 1.0
+        lamda_x = 2.0*math.pi
+        lamda_z = 2.0*math.pi
+        alpha = ((2.0*math.pi) / lamda_x) #* Re #non-dimensionalised by Re 
+        beta  = ((2.0*math.pi) / lamda_z) #* Re #non-dimensionalised by Re
     
-    scalars = 0
     
     physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
     generated_ff = np.zeros((len(x), 3*m, len(z)))
@@ -169,8 +163,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     for mode_num in range(0, kx.shape[0]):
         # the number of modes we are generating to create a packet
         # So we will loop through each set of modes...
-        kx_mode_num = kx[mode_num, :]
-        kz_mode_num = kz[mode_num, :]
+        kx_mode_num = kx[mode_num]
+        kz_mode_num = kz[mode_num]
         
         for ikx in range(0, len(kx_mode_num)):
             for ikz in range(0, len(kz_mode_num)):
@@ -183,6 +177,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
                 
                 # Calculate the temporal frequency
                 omega = 2.0*math.pi*kx_mode_num[ikx]/Lx * c
+                omega = kx_mode_num[ikx] * c
                 
                 
                 # Get the state vectors so that you can compute the resolvent operator
@@ -191,11 +186,13 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
                 # The calculations given below (and variable names) are outlined in:
                 #     Moarref, Model-based scaling of the streamwise energy 
                 #     density in high-Reynolds number turbulent channels, 2013.
+                iter_kx=kx_mode_num[ikx]*alpha
+                iter_kz=kz_mode_num[ikz]*beta
                 
     
                 C, C_adj, A, w, y_cheb = get_state_vectors(N, Re, Lx, Lz, 
-                                                           kx_mode_num[ikx]*alpha,
-                                                           kz_mode_num[ikz]*beta)
+                                                           iter_kx,
+                                                           iter_kz)
                 
                 I = np.eye(A.shape[0])
                 # The resolvent of state operator A
@@ -207,28 +204,28 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
                 H = C*RA*C_adj
                 
                 # Transfer function testing output...
-                Hreal = H.real
-                Himag = H.imag
+#                Hreal = H.real
+#                Himag = H.imag
                 
-                fileName='/Hreal.txt'
-                file = open('/home/arslan/Documents' + fileName, "w")
-                for i in range(0, Hreal.shape[0]):
-                    tmp = Hreal[i,:]#take each row
-                    for q in range(0, tmp.shape[1]):#write each element
-                        tmp0 = str(tmp[0,q])
-                        file.write(tmp0 + " ")
-                    file.write("\n")
-                file.close()
-                
-                fileName='/Himag.txt'
-                file = open('/home/arslan/Documents' + fileName, "w")
-                for i in range(0, Hreal.shape[1]):
-                    tmp = Himag[i,:]#take each row
-                    for q in range(0, tmp.shape[1]):#write each element
-                        tmp0 = str(tmp[0,q])
-                        file.write(tmp0 + " ")
-                    file.write("\n")
-                file.close()
+#                fileName='/Hreal.txt'
+#                file = open('/home/arslan/Documents' + fileName, "w")
+#                for i in range(0, Hreal.shape[0]):
+#                    tmp = Hreal[i,:]#take each row
+#                    for q in range(0, tmp.shape[1]):#write each element
+#                        tmp0 = str(tmp[0,q])
+#                        file.write(tmp0 + " ")
+#                    file.write("\n")
+#                file.close()
+#                
+#                fileName='/Himag.txt'
+#                file = open('/home/arslan/Documents' + fileName, "w")
+#                for i in range(0, Hreal.shape[1]):
+#                    tmp = Himag[i,:]#take each row
+#                    for q in range(0, tmp.shape[1]):#write each element
+#                        tmp0 = str(tmp[0,q])
+#                        file.write(tmp0 + " ")
+#                    file.write("\n")
+#                file.close()
                 
                 
                 
@@ -262,8 +259,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
                 # Store the generated modes and the first singular values
                 # for each wavenumber triplet.
                 # take the first column of the resolvent modes
-                #mode[:, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
-                #singular_value[ikx, ikz] = S[0]
+#                mode[mode_num, :, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
+#                singular_value[mode_num, ikx, ikz] = S[0]
                 
                 
                 # Calculate u_tilde
@@ -298,7 +295,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
                 num_modes = min(num_modes, 3*m)
                 
                 for iy in range(0, num_modes):
-                    physical_ff += ifft(u_tilde[:,iy], kx_mode_num[ikx], kz_mode_num[ikz], c, x, z, t, Lx, Lz, m)
+                    physical_ff += ifft(u_tilde[:,iy], iter_kx, iter_kz, c, x, z, t, Lx, Lz, m)
+#                    physical_ff += ifft(u_tilde[:,iy], kx_mode_num[ikx], kz_mode_num[ikz], c, x, z, t, Lx, Lz, m)
                     
                 
                 # Generated flow field is the velocity vector U
@@ -361,6 +359,24 @@ def main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray):
     gen_ff['kz'] = string_kz
     gen_ff['c'] = string_c
     gen_ff['A'] = string_A
+    
+    
+    
+    
+    
+    
+    
+    # Time iteration code
+    # code after lunch, till then go through the symmetries/group theory stuff
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     return gen_ff
