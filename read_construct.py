@@ -488,7 +488,7 @@ def get_data_slice(ff, four_d_array, var_geo):
         title = 'ZY plane at X: ' + str(four_d_array[1])
 
     elif four_d_array[2] != 'all': # XZ plane
-        contour_data = U_mag[:, four_d_array[2], :]
+        contour_data = U_mag[:, four_d_array[2], :].T
         
         v0, v1 = get_other_vels(four_d_array[0])
         v0 = ff[v0, :, four_d_array[2], :].T

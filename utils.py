@@ -239,6 +239,9 @@ def writeGEOMfile(data, directory):
     
     alpha = (2.* math.pi) / data['Lx']
     file.write(str( alpha ) + '\t\t\t\t\t\t%alpha=2pi/Lx' + "\n")
+    gamma = (2.* math.pi) / data['Lz']
+    file.write(str( gamma ) + '\t\t\t\t\t\t%gamma=2pi/Lz' + "\n")
+    
     
     file.close()
     
@@ -247,23 +250,23 @@ def writeGEOMfile(data, directory):
     
 def makeSolutionDirectory(data, directory, n, re, kx, kz, c, amplitudes, i):
 
-    
+    kxstr = data['kx']
     
     if kx.shape[0] > 1:
         i = str(i).zfill(3)
         folderName = "/wavepacket_" + str(i) + "_" + str(kx.shape[0]) + "modes_" + str(amplitudes[0])
         
     else:
-        kx = data['kx']
+        kxstr = data['kx']
         kz = data['kz']
         c = data['c']
         A = data['A']
         i = str(i).zfill(3)
         
         if kx[0][0] < 0:
-            folderName = "/triplet_case_"+ str(i) +"_" + "+-" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+            folderName = "/triplet_case_"+ str(i) +"_+-" + str(kxstr) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
         else:
-            folderName = "/triplet_case_"+ str(i) +"_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
+            folderName = "/triplet_case_"+ str(i) +"_"   + str(kxstr) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A)
         
     directory = directory + folderName
     

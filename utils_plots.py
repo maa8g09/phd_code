@@ -193,7 +193,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
         CS = plt.contourf(axis_x, 
                           axis_y, 
                           data_to_plot, 
-                          100, # levels
+                          101, # levels
                           # [-1, -0.1, 0, 0.1], #alpha=0.5,
                           cmap=cm.seismic,
                           origin=origin)
@@ -202,7 +202,8 @@ def plot2D_modes(flowField, four_d_array, three_d):
         if quiver:
             # We will be plotting the quiver plots,
             Q = plt.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v), 
-                           #angles='xy', scale_units='xy', scale=0.0025)
+#                           angles='xy', scale_units='xy', scale=0.0025)
+                           
     
         plt.xlabel(axis_x_t)
         plt.ylabel(axis_y_t)
@@ -276,14 +277,13 @@ def plot2D(data_slice):
 #            
 
 
-    origin = 'lower'
     CS = plt.contourf(x, 
                       y, 
-                      data_slice['contourData'].T, 
+                      data_slice['contourData'], 
                       100, # levels
                       # [-1, -0.1, 0, 0.1], #alpha=0.5,
-                      cmap=cm.seismic,
-                      origin=origin)
+                      cmap=cm.seismic
+                      )
 
     
     # Plot text
@@ -301,6 +301,7 @@ def plot2D(data_slice):
         
     # Plot grid 
     plt.grid(True)
+    plt.show()
     
     return
 
