@@ -34,20 +34,16 @@ def plot2D_modes(flowField, four_d_array, three_d):
     vel = 0
     if four_d_array[0] == 0:
         vel = flowField['U']
-        cbar_t = 'U velocity'
+        cbar_t = 'u'
     elif four_d_array[0] == 1:
         vel = flowField['V']
-        cbar_t = 'V velocity'
+#        vel = np.fliplr(vel)
+        cbar_t = 'v'
     elif four_d_array[0] == 2:
         vel = flowField['W']
-        cbar_t = 'W velocity'
+        cbar_t = 'w'
     
     
-    
-        
-    quiv_3D_u = np.zeros((flowField['Ny'], flowField['Nx'], flowField['Nz']))
-    quiv_3D_v = np.zeros((flowField['Ny'], flowField['Nx'], flowField['Nz']))
-    quiv_3D_w = np.zeros((flowField['Ny'], flowField['Nx'], flowField['Nz']))
     
     
     if four_d_array[1] != 'all': #ZY plane
@@ -60,15 +56,12 @@ def plot2D_modes(flowField, four_d_array, three_d):
         
         data_to_plot = vel[four_d_array[1],:,:]
 
-        title = 'Generated flow field at X = ' + str(four_d_array[1])
+        xcoord=flowField['X'][four_d_array[1]]
+        title = 'Generated flow field at x = ' + str(xcoord)
         
         quiv_2D_u = flowField['W'][four_d_array[1], :, :]
         quiv_2D_v = flowField['V'][four_d_array[1], :, :]
         
-        quiv_3D_u[:, four_d_array[1], :] = quiv_2D_u
-        quiv_3D_v[:, four_d_array[1], :] = quiv_2D_v
-        quiv_3D_w[:, four_d_array[1], :] = flowField['U'][four_d_array[1], :, :]
-
         
     elif four_d_array[2] != 'all': # XZ plane
         axis_x = flowField['X']
@@ -80,15 +73,12 @@ def plot2D_modes(flowField, four_d_array, three_d):
         
         data_to_plot = vel[:,four_d_array[2],:].T
         
-        title = 'Generated flow field at Y = ' + str(four_d_array[2])
+        ycoord=flowField['Y'][four_d_array[2]]
+        title = 'Generated flow field at y = ' + str(ycoord)
         
         quiv_2D_u = flowField['U'][:, four_d_array[2], :]
         quiv_2D_v = flowField['W'][:, four_d_array[2], :]
-        
-        quiv_3D_u[four_d_array[2], :, :] = quiv_2D_u
-        quiv_3D_v[four_d_array[2], :, :] = quiv_2D_v
-        quiv_3D_w[four_d_array[2], :, :] = flowField['V'][:, four_d_array[2], :]
-        
+
         
         
     elif four_d_array[3] != 'all': # XY plane
@@ -99,18 +89,16 @@ def plot2D_modes(flowField, four_d_array, three_d):
         axis_z = flowField['Z']
         axis_z_t= 'Z'
         
-        data_to_plot = vel[:,:,four_d_array[3]].T
+        data_to_plot = np.fliplr(vel[:,:,four_d_array[3]].T)
         
-        title = 'Generated flow field at Z = ' + str(four_d_array[3])
+        
+        zcoord=flowField['Z'][four_d_array[3]]
+        
+        title = 'Generated flow field at z = ' + str(zcoord)
         
         quiv_2D_u = flowField['U'][:, :, four_d_array[3]].T
         quiv_2D_v = flowField['V'][:, :, four_d_array[3]].T
-        
-        quiv_3D_u[:, :, four_d_array[3]] = quiv_2D_u
-        quiv_3D_v[:, :, four_d_array[3]] = quiv_2D_v
-        quiv_3D_w[:, :, four_d_array[3]] = flowField['W'][:, :, four_d_array[3]].T
-        
-        
+
     
     
     
@@ -197,11 +185,12 @@ def plot2D_modes(flowField, four_d_array, three_d):
                           # [-1, -0.1, 0, 0.1], #alpha=0.5,
                           cmap=cm.seismic,
                           origin=origin)
+        cbar = plt.colorbar(CS)
+        cbar.ax.set_ylabel(cbar_t)
     
-    
-        if quiver:
-            # We will be plotting the quiver plots,
-            Q = plt.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v), 
+#        if quiver:
+#            # We will be plotting the quiver plots,
+#            Q = plt.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v), 
 #                           angles='xy', scale_units='xy', scale=0.0025)
                            
     
@@ -210,8 +199,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
         
         plt.title(title)
         
-        cbar = plt.colorbar(CS)
-        cbar.ax.set_ylabel(cbar_t)
+
         
             
         
@@ -239,42 +227,16 @@ def plot2D(data_slice):
     utils.printSectionHeader()
     utils.printSectionTitle('Plotting a 2D plane')
 
-    x = np.arange(len(data_slice['axis_0']))
-    y = np.arange(len(data_slice['axis_1']))
+    x = data_slice['axis_0']
+    y = data_slice['axis_1']
 
+    xticks = np.linspace(x[0], x[-1], 6)
+    yticks = np.linspace(y[0], y[-1], 8)
+    
     
     x, y = np.meshgrid(x, y)
 
     plt.subplots(1,1)
-    plt.quiver(x,
-               y,
-               data_slice['vel_0'],
-               data_slice['vel_1']
-               )
-#    plt.xlabel(data_slice['axis_0_title'])
-#    plt.ylabel(data_slice['axis_1_title'])
-#    plt.title(data_slice['plotTitle'])
-#               colour,
-#               clim=[min(colour), max(colour)],
-#               pivot='mid')
-
-#    v_cont_normalized = um.normalize(v_cont)
-    
-    # find the maximum value in the array and normalize everything according to it
-#    max_in_each_row_list = data_slice['vel_data'].max(axis=1)
-#    max_vel = max_in_each_row_list.max()
-#    min_in_each_row_list = data_slice['vel_data'].min(axis=1)
-#    min_vel = min_in_each_row_list.min()
-#    
-#    delta = max_vel - min_vel
-#    # now we do teh normalizing...
-#    for i in range(0, data_slice['vel_data'].shape[0]):
-#        for j in range(0, data_slice['vel_data'].shape[1]):
-#            # range [-1, 1]
-##            data_slice['vel_data'][i,j] = ((data_slice['vel_data'][i,j] - min_vel) / (delta) - 0.5) * 2.0
-#            # range [0, 1]
-#            data_slice['vel_data'][i,j] = (data_slice['vel_data'][i,j] - min_vel) / (delta)
-#            
 
 
     CS = plt.contourf(x, 
@@ -285,7 +247,13 @@ def plot2D(data_slice):
                       cmap=cm.seismic
                       )
 
-    
+    plt.quiver(x,
+               y,
+               data_slice['vel_0'],
+               data_slice['vel_1'],
+               color='y'
+               )
+               
     # Plot text
     plt.xlabel(data_slice['axis_0_title'])
     plt.ylabel(data_slice['axis_1_title'])
@@ -297,10 +265,12 @@ def plot2D(data_slice):
     
         
     cbar = plt.colorbar(CS)
-#    cbar.ax.set_ylabel(cbar_t)
+    cbar.ax.set_ylabel(data_slice['cbar_t'])
         
     # Plot grid 
     plt.grid(True)
+    plt.xticks(xticks)#, fontsize = 15)
+    plt.yticks(yticks)#, fontsize = 15)
     plt.show()
     
     return

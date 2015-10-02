@@ -20,11 +20,19 @@ import utils as ut
 import utils_plots as up
 import numpy as np
 
+
+from scipy.interpolate import interp1d
+from colorama import Fore, Back, Style
 from math import pi
 from numpy.linalg import inv
 from numpy.linalg import solve
 from numpy.linalg import pinv
 from numpy.linalg import svd
+
+
+import matplotlib.pyplot as plt
+
+
 
 
 def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourdarray):
@@ -66,33 +74,19 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
         # Can use independent geometrical values
         Nx = 40
         Nz = 30
-        
         alpha = kx[0]
         beta = kz[0]
-        
-        
         lamda_x = 2.0*pi / alpha
         lamda_z = 2.0*pi / beta
-        
-        
         Lx = lamda_x
         Lz = lamda_z
-        
-        
         x = np.linspace(0.0, Lx, Nx)
         z = np.linspace(-Lz/2.0, Lz/2.0, Nz)
-        
-        
         Mx = alpha * np.arange(Nx + 1)
         Mz = beta  * np.arange(Nz + 1)
-        
-        
         Ny = N - 2
         Nd = 3
-        
-        
         y = np.linspace(-channel_half_height, channel_half_height, Ny)
-        
         
         
     else:
@@ -135,25 +129,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
             
 
 
-    # Ubulk is calculated as follows:
-    # take the integral from -1 to 1 of laminar flow:
-    # i.e.
-    # integrate 1-y^2 to get y - y^3/3
-    # putting in the limits [-1,1]
-    # we get
-    # Ubulk = 4/3
-
 
     t = 0  # run-time
     m = N - 2 # number of modes
-    
-    # Initialize an object array to store the generated modes for each
-    # wavenumber phase speed combination
-#    mode = np.zeros((kx.shape[0], 3.0*m, len(kx), len(kz)), dtype=np.complex128)
-    
-    # Initialize a 3D matrix for keeping track of the first 
-    # singular value per mode
-#    singular_value = np.zeros((kx.shape[0], len(kx), len(kz)))
+
     
     
 
@@ -167,188 +146,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
     
     physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-    generated_ff = np.zeros((len(x), 3*m, len(z)))
-
-    # Amplitudes
-    # A = S * khi
-
-#    for mode_num in range(0, kx.shape[0]):
-#        # the number of modes we are generating to create a packet
-#        # So we will loop through each set of modes...
-#        kx_mode_num = kx[mode_num]
-#        kz_mode_num = kz[mode_num]
-#        
-#        for ikx in range(0, len(kx_mode_num)):
-#            for ikz in range(0, len(kz_mode_num)):
-#                # account for kx = kz = 0 (turbulent mean)
-#                if kx_mode_num[ikx] == 0 or kz_mode_num[ikz] == 0:
-#                    continue
-#                
-#                print('kx:',kx_mode_num[ikx],'    kz:',kz_mode_num[ikz], '    A:',amplitude[mode_num])
-#                
-#                
-#                # Calculate the temporal frequency
-##                omega = 2.0*pi*kx_mode_num[ikx]/Lx * c
-#                
-#                
-#                # Get the state vectors so that you can compute the resolvent operator
-#                # and hence the transfer function.
-#                # 
-#                # The calculations given below (and variable names) are outlined in:
-#                #     Moarref, Model-based scaling of the streamwise energy 
-#                #     density in high-Reynolds number turbulent channels, 2013.
-#                iter_kx=kx_mode_num[ikx]*alpha
-#                iter_kz=kz_mode_num[ikz]*beta
-#                
-#                omega = kx_mode_num[ikx] * c
-#                omega = iter_kx * c
-#                
-#    
-#                C, C_adj, A, w, y_cheb = get_state_vectors(N, Re, Lx, Lz, 
-#                                                           iter_kx,
-#                                                           iter_kz)
-#                
-#                I = np.eye(A.shape[0])
-#                # The resolvent of state operator A
-#                L = -1j*omega*I - A
-#                RA = inv(L)
-#                
-#                
-#                # Transfer function
-#                H = C*RA*C_adj
-#                
-#                # Transfer function testing output...
-##                Hreal = H.real
-##                Himag = H.imag
-#                
-##                fileName='/Hreal.txt'
-##                file = open('/home/arslan/Documents' + fileName, "w")
-##                for i in range(0, Hreal.shape[0]):
-##                    tmp = Hreal[i,:]#take each row
-##                    for q in range(0, tmp.shape[1]):#write each element
-##                        tmp0 = str(tmp[0,q])
-##                        file.write(tmp0 + " ")
-##                    file.write("\n")
-##                file.close()
-##                
-##                fileName='/Himag.txt'
-##                file = open('/home/arslan/Documents' + fileName, "w")
-##                for i in range(0, Hreal.shape[1]):
-##                    tmp = Himag[i,:]#take each row
-##                    for q in range(0, tmp.shape[1]):#write each element
-##                        tmp0 = str(tmp[0,q])
-##                        file.write(tmp0 + " ")
-##                    file.write("\n")
-##                file.close()
-#                
-#                
-#                
-#                # Perform SVD on the resolvent operator (R_A) to get the forcing, 
-#                # singluar and response modes. This also gives a flow field 
-#                # in spectral space.
-#                # 
-#                #   U_spectral: response modes in fourier space (resolvent modes)
-#                #            S: signular values
-#                #   V_spectral: forcing modes in fourier space
-#                #
-#                # In matlab U S V  = svd(H)
-#                # In python U S Vh = svd(H), where V = Vh.T
-#                #
-#                U_spectral, S, V_spectral = svd(H)
-#                
-#                if np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H) >= 1e-10:
-#                    nrm = str(np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H))
-#                    err = 'Something went wrong with the SVD, norm is '+nrm
-#                    ut.error(err)
-#                    
-#                
-#                # Solve linear equation to recover the velocities
-#                #     Ax = b
-#                #      A: w.T (Clencurt vector has been converted to a diagonal matrix)
-#                #      x: resolvent modes
-#                #      b: U_spectral
-#                resolvent_modes = solve(w.T, U_spectral)
-#                
-#                
-#                # Store the generated modes and the first singular values
-#                # for each wavenumber triplet.
-#                # take the first column of the resolvent modes
-##                mode[mode_num, :, ikx, ikz] = np.squeeze(np.asarray(resolvent_modes[:, 0])) 
-##                singular_value[mode_num, ikx, ikz] = S[0]
-#                
-#                
-#                # Calculate u_tilde
-#                if modesOnly:
-#                    tmp= w * resolvent_modes[:, 0]
-#                    u_tilde = amplitude[mode_num] * resolvent_modes[:, 0] # np.diag(tmp)
-#    #                u_tilde = amplitude * resolvent_modes[:, 0]
-#                    
-#                else:
-#                    # To get the weighting we can use the scalars that I can 
-#                    # get from Gibson's solutions.
-#                    # Otherwise I use a constant coefficient as the weighting
-#                    # factor.
-#                    scalars = get_scalars(u_hat[ikx, :, ikz], resolvent_modes[:, 0], w)
-#                    amplitude = np.asmatrix(S[0]) * np.asmatrix(scalars).T
-#                    u_tilde = amplitude[0,0] * resolvent_modes
-#                
-#                
-#                u_tilde += np.conjugate(u_tilde)
-#                
-#                # add the complex conjugate of u_tilde to u_tilde before you inverse fourier it.
-#                # alternatively we could add the complex conjugate after the physical flowfield has been 
-#                # generated.
-#                
-#                u_tilde = np.asmatrix(u_tilde)
-#                # Convert the resolvent modes to physical space
-#                physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-#    
-#    
-#                # Number of resolvent modes to use
-#                num_modes = 1
-#                num_modes = min(num_modes, 3*m)
-#                
-#                for iy in range(0, num_modes):
-#                    physical_ff += ifft(u_tilde[:,iy], iter_kx, iter_kz, c, x, z, t, Lx, Lz, m)
-##                    physical_ff += ifft(u_tilde[:,iy], kx_mode_num[ikx], kz_mode_num[ikz], c, x, z, t, Lx, Lz, m)
-#                    
-#                
-#                # Generated flow field is the velocity vector U
-#                # which contains (u,v,w)
-#                # U += (S[0] * scalars[0,:,:] * physical_ff[0,:,:])
-#                #
-#                # Generated flow field is just the physical_ff
-#                generated_ff += physical_ff.real
-#    
-#            
-#            string_kx = str(kx_mode_num[ikx])
-#            string_kz = str(kz_mode_num[ikz])
-#            string_c = format(c, '.4f')
-#            string_A = str(amplitude[mode_num])
-#        
-#
-#
-#
-#
-#    U = np.zeros((Nd, Nx, Ny, Nz))
-#    U_u = generated_ff[:,   0:m  , :]
-#    U_v = generated_ff[:,   m:2*m, :]
-#    U_w = generated_ff[:, 2*m:3*m, :]
-
-
-
-
-
-
-
-
-
-
-
-
+    generated_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
+    
     lambda_x = 2.0*pi / kx[0]
     lambda_z = 2.0*pi / kz[0]
-    
     Lx = lambda_x
     Lz = lambda_z
     
@@ -357,20 +158,20 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
 
     # Number of grid points
     Nx = 32 # even
-    Nz = 32 # even
+    Nz = 33 # even
 
     # Stationary nodes along each axis
     # X axis
     Mx = Nx
     Mx = np.arange((-Mx/2.0), (Mx/2.0)+1)
-    
-#    Mx = np.arange(0.0, Nx)
-#    Mx = np.array([1.0])
+#    Mx = np.arange(-5.0, 6.0) # 5 harmonics
+    Mx = np.arange(-1.0, 2.0) # 1 harmonic
     
     # Z axis
     Mz = 0.5*(Nz) + 1.0
     Mz = np.arange(0, Mz)
-#    Mz = np.array([1.0])
+#    Mz = np.arange(6.0) # 5 harmonics
+    Mz = np.arange(2.0) # 1 harmonic
 
 
 
@@ -383,8 +184,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     m = N - 2 # number of modes in y axis
 
     
-    generated_ff = np.zeros((Nx, 3*m, Nz)) # multiply y axis by 3 to take [u v w] into account
-#    spectral_ff = np.zeros((len(kx), 3*m, len(Mx), len(Mz)))
+    generated_ff = np.zeros((Nx, 3*m, Nz), dtype=np.complex128) # multiply y axis by 3 to take [u v w] into account
+    sing_vals = np.zeros((len(kx), len(Mx),len(Mz)))
     
     
     for index in range(0, len(kx)):
@@ -406,8 +207,11 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
             string_A = str(amplitudes[index])
         
         
+        text01='alpha:'+ str(fund_alpha)+ '  beta:'+ str(fund_beta)+ '    amplitude:'+ str(amplitudes[index])
+        print(Fore.RED + text01 + Style.RESET_ALL)
         
-        print('alpha:', fund_alpha, '  beta:', fund_beta, '    amplitude:', amplitudes[index])
+        print('kx = mx * alpha        kz = mz * beta')
+        
         # loop through the stationary modes
         for ia in range(0, len(streamwise_stationary_modes)):
             for ib in range(0, len(spanwise_stationary_modes)):
@@ -422,18 +226,31 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     if alpha == 0 or beta == 0:
                         continue
                     
-                    print('kx:', alpha, '    kz:', beta)
                     
+                    # kx = mx * fund_alpha
+                    # mx = Mx[ia]
+                    # same for Mz
+                    text02='(mx)kx: ('+str(Mx[ia])+') '+ str(alpha)+'    (mz)kz: ('+str(Mz[ib])+') '+ str(beta)
+                    print(Fore.BLUE + text02 + Style.RESET_ALL)
                     
                     omega = alpha * c
                     
-                    C, C_adj, A, w, y_cheb, D1= get_state_vectors(N, Re, Lx, Lz, alpha, beta, c)
+                    C, C_adj, A, w, y_cheb, D1, ResolventA2 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c)
                     I = np.eye(A.shape[0])
-                    L = -1j*omega*I - A
-                    RA = inv(L) # resolvent
-                    H = C*RA*C_adj # transfer function
+                    L = 1.0j*omega*I + A
+                    Linv = inv(L)
+                    ResolventA = -1.0* Linv # resolvent
+                    H = C*ResolventA*C_adj # transfer function
                     U_spectral, S, V_spectral = svd(H)
-                        
+                    
+                    
+                    #===========================================================
+                    sing_vals[index, Mx[ia], Mz[ib]] = S[0]
+                    # ideally one would have a percentage checker to only 
+                    # hold onto the singular values which are within 5/10/15%
+                    # of the highest singular value
+                    #===========================================================
+                    
                     if np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H) >= 1e-10:
                         nrm = str(np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H))
                         err = 'Something went wrong with the SVD, norm is '+nrm
@@ -444,6 +261,18 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     
                     divergence = 1.0j*alpha*resolvent_modes[0:m, 0] + np.dot(D1, resolvent_modes[m:2*m, 0]) + 1.0j*beta*resolvent_modes[2*m:3*m, 0]
                     div_norm = np.linalg.norm(divergence)
+                    
+                    if div_norm >= 1e-10:
+                        err = 'Something went wrong with the divergence criteria, norm is '+div_norm
+                        ut.error(err)
+                    
+                    
+#                    resolvent_modes2 = solve(w.T, U_spectral2)
+#                    divergence2 = 1.0j*alpha*resolvent_modes2[0:m, 0] + np.dot(D1, resolvent_modes2[m:2*m, 0]) + 1.0j*beta*resolvent_modes2[2*m:3*m, 0]
+#                    div_norm = np.linalg.norm(divergence2)
+                    
+                    
+                    
                     
                     u_tilde = amplitudes[index] * resolvent_modes[:, 0] 
 #                    u_tilde = amplitudes[index] * resolvent_modes[:, 0] * S[0]
@@ -465,7 +294,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     U_w = physical_ff.real[:, 2*m:3*m, :]
                     U = np.zeros((Nd, Nx, Ny, Nz))
 
-                    
+        print('')
 
     
     # Output the flow field as an ASCII file for channelflow to read in.
@@ -492,13 +321,75 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                         U[i, nx, ny, nz] = U_w[nx, ny, nz]
 
     
+    
+    
+    
+    L2Norm = np.linalg.norm(U)
+    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
+
+#    magn = 10.0
+#    U *= magn / L2Norm
+    
+
+    
+    
+    
+    # Interpolation to go from y_cheb toy_uniform
+    Ny = m
+    y_uniform = np.linspace(1.0, -1.0, Ny*1.0)
+    y_cheb = np.asarray(y_cheb)
+    y_cheb = np.squeeze(y_cheb)
+    
+    
+    U_u_uniform = np.zeros((Nx, m, Nz))
+    U_v_uniform = np.zeros((Nx, m, Nz))
+    U_w_uniform = np.zeros((Nx, m, Nz))
+    
+    for nx in range(0, Nx):
+        for nz in range(0, Nz):
+            uprofile = U_u[nx, :, nz] # 1-d vector
+            # fill value is the no-slip boundary condition
+            fu = interp1d(y_cheb, uprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fu = fu(y_uniform)
+            U_u_uniform[nx, :, nz] = fu
+            
+            
+            vprofile=U_v[nx, :, nz] # 1-d vector
+            fv = interp1d(y_cheb, vprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fv = fv(y_uniform)
+            U_v_uniform[nx, :, nz] = fv
+            
+            wprofile=U_w[nx, :, nz] # 1-d vector
+            fw = interp1d(y_cheb, wprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fw = fw(y_uniform)
+            U_w_uniform[nx, :, nz] = fw
+            
+            
+
+    
+#    
+#    plt.plot(y_cheb, uprofile, 'r-', y_uniform, fu, 'g--')
+#    plt.legend(['data', 'cubic'], loc='best')
+#    plt.grid(True)
+#    plt.show()
+    
+    
+        
     gen_ff = {}
     gen_ff['resolvent_flowField'] = U
+    
+#    gen_ff['U'] = U_u_uniform
+#    gen_ff['V'] = U_v_uniform
+#    gen_ff['W'] = U_w_uniform
+    
     gen_ff['U'] = U_u
     gen_ff['V'] = U_v
     gen_ff['W'] = U_w
+    
+    
     gen_ff['X'] = x
-    gen_ff['Y'] = y
+#    gen_ff['Y'] = y_uniform
+    gen_ff['Y'] = y_cheb
     gen_ff['Z'] = z
 
     gen_ff['Nx'] = Nx
@@ -516,7 +407,135 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
     
     
+    
+    
+    
     return gen_ff
+
+
+
+
+
+
+def main_gibson_soln(data):
+    
+    c = 1.0
+    Re = 400
+
+    if data['flowField']['is_spectral'] == True:
+        u_hat = data['flowField']['spectral']
+        u_hat = np.concatenate((u_hat[0,:,:,:],
+                                u_hat[1,:,:,:],
+                                u_hat[2,:,:,:]), 
+                                axis=1)
+        
+        Nx    = data['geometry']['physical']['Nx']
+        Ny    = data['geometry']['spectral']['Ny']
+        N     = Ny + 2
+        Nz    = data['geometry']['physical']['Nz']
+        Nd    = data['geometry']['spectral']['Nd']
+        
+        Lx    = data['geometry']['physical']['Lx']
+        Lz    = data['geometry']['physical']['Lz']
+        
+        x     = np.linspace(0.0, Lx, Nx)
+        z     = np.linspace(-Lz/2.0, Lz/2.0, Nz)
+        
+        alpha = data['geometry']['physical']['alpha']
+        beta  = data['geometry']['physical']['gamma']
+        
+        
+    elif data['flowField']['is_physical'] == True:
+        Nx    = data['geometry']['physical']['Nx']
+        Nz    = data['geometry']['physical']['Nz']
+        Ny    = data['geometry']['physical']['Ny']
+        N     = Ny + 2
+        Nd    = data['geometry']['physical']['Nd']
+        Lx    = data['geometry']['physical']['Lx']
+        Lz    = data['geometry']['physical']['Lz']
+        alpha = data['geometry']['physical']['alpha']
+        beta  = data['geometry']['physical']['gamma']
+        
+        # Fourier transform the channelflow solution
+        u_hat = fft_flowField(data)
+    
+    
+    # Now we know the fundamental wavenumbers and the geometrical
+    # dimensions of the physical domain we are studying.
+    
+    # Let us proceed to generate modes with these details and then
+    # project the modes onto the spectral velocity field
+    # in order to get values for the amplitude coefficients.
+    
+    
+    # Stationary nodes along each axis
+    # X axis
+    Mx = np.arange((-Nx/2.0)+1, (Nx/2.0)+1)
+    
+    # Z axis
+    Mz = 0.5*(Nz) + 1.0
+    Mz = np.arange(0, Mz)
+    
+    kx = Mx * alpha
+    kz = Mz * beta
+    m = N - 2 # Ny
+    
+    generated_ff = np.zeros((Nx, 3*m, Nz), dtype=np.complex128) # multiply y axis by 3 to take [u v w] into account
+    sing_vals = np.zeros((1, len(Mx),len(Mz)))    
+    
+    
+    for ikx in range(0, len(kx)):
+        for ikz in range(0, len(kz)):
+    
+            alpha = kx[ikx]
+            beta  = kz[ikz]
+            
+            omega=c*alpha
+            
+            C, C_adj, A, w, y_cheb, D1, ResolventA2 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c)
+            
+            # Now make the resolvent.
+            I = np.eye(A.shape[0])
+            L = 1.0j*omega*I + A
+            Linv = inv(L)
+            ResolventA = -1.0* Linv # resolvent
+            H = C*ResolventA*C_adj # transfer function
+            U_spectral, S, V_spectral = svd(H)
+            
+            
+            #===========================================================
+            sing_vals[0, Mx[ikx], Mz[ikz]] = S[0]
+            # ideally one would have a percentage checker to only 
+            # hold onto the singular values which are within 5/10/15%
+            # of the highest singular value
+            #===========================================================
+            
+            if np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H) >= 1e-10:
+                nrm = str(np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H))
+                err = 'Something went wrong with the SVD, norm is ' + nrm
+                ut.error(err)
+            
+            
+            resolvent_modes = solve(w.T, U_spectral)
+        
+            divergence = 1.0j*alpha*resolvent_modes[0:m, 0] + np.dot(D1, resolvent_modes[m:2*m, 0]) + 1.0j*beta*resolvent_modes[2*m:3*m, 0]
+            div_norm = np.linalg.norm(divergence)
+            
+            if div_norm >= 1e-10:
+                err = 'Something went wrong with the divergence criteria, norm is '+div_norm
+                ut.error(err)
+        
+            
+            
+            # We know u_tilde
+            u_tilde = u_hat[ikx, :, ikz]
+            
+            chi_scalar = get_scalars(u_tilde, resolvent_modes, w, S, m)
+    
+    
+    
+    return gen_ff
+
 
 
 
@@ -658,23 +677,26 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta, c):
     omega = alpha * c
     L = 1.0j*omega*I + A
     Linv = inv(L)
-    RA = -1.0*inv(L) # resolvent
+    ResolventA = -1.0*inv(L) # resolvent
     
     
     
     # we can alternatively construct the resolvent:
-    flooby = 1.0*alpha*((U - c)*Lap - d2U_dy2) - (del_hat_4 / Re)
+    UminusC2 = np.diag(U) - c
+    UminusC = np.identity(m) 
+    np.fill_diagonal(UminusC, UminusC2)
+    flooby = 1.0j*alpha*UminusC*Lap - 1.0j*alpha*d2U_dy2 - (del_hat_4 / Re)
     
     topleft = solve(Lap, flooby)
     topright = Z
-    bottomleft = 1.0*beta*dU_dy
-    bottomright = 1.0*alpha*(U - c) - (Lap / Re)
+    bottomleft = 1.0j*beta*dU_dy
+    bottomright = 1.0j*alpha*UminusC - (Lap / Re)
     
     
-    RA2 = np.vstack((np.hstack((topleft,topright)), np.hstack((bottomleft, bottomright))))
+    ResolventA2 = np.vstack((np.hstack((topleft,topright)), np.hstack((bottomleft, bottomright))))
     
     
-    return C, C_adj, A, w, y_cheb, D1
+    return C, C_adj, A, w, y_cheb, D1, ResolventA2
         
     
     
@@ -774,33 +796,32 @@ def fft(signal, kx, kz, c, x, z, t, Lx, Lz):
 
 
 
-def get_scalars(u_hat, resolvent_modes, w):
+def get_scalars(u_hat, resolvent_modes, w, Sigma, m):
+
+
+    rank = m
+    rank = min(rank, 3*m)
+    indx = rank - 1
+
+    Sinv = np.linalg.inv(np.diag(Sigma[:indx]))
+    Sinv = np.asmatrix(Sinv)
 
     resolvent_modes = np.asmatrix(resolvent_modes)
+    psi = resolvent_modes[: , :indx] # column vectors
     
     # Get the complex conjugate of the modes.
-    resolvent_modes_star = resolvent_modes.H
-    resolvent_modes_star = np.asmatrix(resolvent_modes_star)
+    psi_star = psi.H
     
     # Initialize the scalars vector (shape = Nd*Ny, long vector for u, v, w)
-    scalars = np.zeros((u_hat.shape), dtype=np.complex128)
-    
+    eta = np.zeros((rank, 1), dtype=np.complex128)
     
     # Convert from array to matrix for multiplication later
     w = np.asmatrix(w)    
-    u_hat = np.asmatrix(u_hat)
+    u_hat = np.asmatrix(u_hat).T
     
-    # loop through each resolvent mode
-    for i in range(0, resolvent_modes.shape[0]): # from 0 to Nd*Ny - 1
-        # take each column of the resolvent modes
-        resolvent_modes_col = np.asmatrix(resolvent_modes_star[:,i]) 
-        # Dimensions:
-        #    1     =  1xN *     NxN     *       Nx1
-        tmp = u_hat * w * resolvent_modes_col
-        tmp2= u_hat * resolvent_modes_col
-        scalars[i] = tmp[0,0]
+    eta = Sinv * psi_star * w * u_hat
     
-    return scalars
+    return eta
     
 #            Mz = beta  * np.arange((np.ceil(-Nz/2.0)+1.0), (np.ceil(Nz/2.0)+1.0), 1.0)
 #            Mz = beta  * np.arange((np.ceil(-Nz/2.0)+1.0), (np.ceil(Nz/2.0)+1.0), 1.0)
