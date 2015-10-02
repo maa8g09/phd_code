@@ -477,46 +477,87 @@ def get_data_slice(ff, four_d_array, var_geo):
     U_mag = np.sqrt(U_mag)
     
     
+    vel = 0
+    if four_d_array[0] == 0:
+        vel = ff[0,:,:,:]
+        cbar_t = 'u'
+    elif four_d_array[0] == 1:
+        vel = ff[1,:,:,:]
+        cbar_t = 'v'
+    elif four_d_array[0] == 2:
+        vel = ff[2,:,:,:]
+        cbar_t = 'w'
+    
+    
+    
     if four_d_array[1] != 'all': #ZY plane
-        contour_data = U_mag[four_d_array[1], :, :]
+        contour_data = vel[four_d_array[1], :, :]
         
         v0, v1 = get_other_vels(four_d_array[0])
-        v0 = ff[v0, four_d_array[1], :, :]
-        v1 = ff[v1, four_d_array[1], :, :]
+        v0 = ff[2, four_d_array[1], :, :]
+        v1 = ff[1, four_d_array[1], :, :]
         a0, a0title = var_geo['z'], 'z'
+        
+        Lz = var_geo['Lz']
+        a0 = np.linspace(-Lz/2.0, Lz/2.0, var_geo['Nz'])
+        
         a1, a1title = var_geo['y'], 'y'
-        title = 'ZY plane at X: ' + str(four_d_array[1])
+        a2, a2title = var_geo['x'], 'x'
+        
+        xcoord=a2[four_d_array[1]]
+        
+        title = 'ZY plane at x = ' + str(xcoord)
 
     elif four_d_array[2] != 'all': # XZ plane
-        contour_data = U_mag[:, four_d_array[2], :].T
+        contour_data = vel[:, four_d_array[2], :].T
         
         v0, v1 = get_other_vels(four_d_array[0])
-        v0 = ff[v0, :, four_d_array[2], :].T
-        v1 = ff[v1, :, four_d_array[2], :].T
+        v0 = ff[0, :, four_d_array[2], :].T
+        v1 = ff[2, :, four_d_array[2], :].T
         a0, a0title = var_geo['x'], 'x'
+        a0 = np.linspace(0.0, var_geo['Lx'], var_geo['Nx'])
+        
+        
         a1, a1title = var_geo['z'], 'z'
-        title = 'XZ plane at Y: ' + str(four_d_array[2])
+        Lz = var_geo['Lz']
+        a1 = np.linspace(-Lz/2.0, Lz/2.0, var_geo['Nz'])
+        
+        a2, a2title = var_geo['y'], 'y'
+        ycoord = a2[four_d_array[2]]
+        
+        title = 'XZ plane at y = ' + str(ycoord)
         
     elif four_d_array[3] != 'all': # XY plane
-        contour_data = U_mag[:, :, four_d_array[3]].T
+        contour_data = vel[:, :, four_d_array[3]].T
         
         v0, v1 = get_other_vels(four_d_array[0])
-        v0 = ff[v0, :, :, four_d_array[3]].T
-        v1 = ff[v1, :, :, four_d_array[3]].T
+        v0 = ff[0, :, :, four_d_array[3]].T
+        v1 = ff[1, :, :, four_d_array[3]].T
         a0, a0title = var_geo['x'], 'x'
+        a0 = np.linspace(0.0, var_geo['Lx'], var_geo['Nx'])
+
         a1, a1title = var_geo['y'], 'y'
-        title = 'XY plane at Z: ' + str(four_d_array[3])
+        a2, a2title = var_geo['z'], 'z'
+        
+        Lz = var_geo['Lz']
+        a2 = np.linspace(-Lz/2.0, Lz/2.0, var_geo['Nz'])
+        zcoord = a2[four_d_array[3]]
+        zcoord = format(zcoord, '.1f')
+        title = 'XY plane at z = ' + str(zcoord)
 
  
  
     data_slice = {'contourData': contour_data,
                   'axis_0': a0,
                   'axis_1': a1,
+                  'axis_2': a2,
                   'axis_0_title': a0title,
                   'axis_1_title': a1title,
+                  'axis_2_title': a2title,
                   'vel_0': v0,
                   'vel_1': v1,
-                  'plotTitle': title}
+                  'plotTitle': title,
+                  'cbar_t': cbar_t}
     
     return data_slice
     

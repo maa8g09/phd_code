@@ -20,11 +20,19 @@ import utils as ut
 import utils_plots as up
 import numpy as np
 
+
+from scipy.interpolate import interp1d
+from colorama import Fore, Back, Style
 from math import pi
 from numpy.linalg import inv
 from numpy.linalg import solve
 from numpy.linalg import pinv
 from numpy.linalg import svd
+
+
+import matplotlib.pyplot as plt
+
+
 
 
 def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourdarray):
@@ -167,7 +175,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
     
     physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-    generated_ff = np.zeros((len(x), 3*m, len(z)))
+    generated_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
 
     # Amplitudes
     # A = S * khi
@@ -357,20 +365,20 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
 
     # Number of grid points
     Nx = 32 # even
-    Nz = 32 # even
+    Nz = 33 # even
 
     # Stationary nodes along each axis
     # X axis
     Mx = Nx
     Mx = np.arange((-Mx/2.0), (Mx/2.0)+1)
-    
-#    Mx = np.arange(0.0, Nx)
-#    Mx = np.array([1.0])
+#    Mx = np.arange(-5.0, 6.0) # 5 harmonics
+    Mx = np.arange(-1.0, 2.0) # 1 harmonic
     
     # Z axis
     Mz = 0.5*(Nz) + 1.0
     Mz = np.arange(0, Mz)
-#    Mz = np.array([1.0])
+#    Mz = np.arange(6.0) # 5 harmonics
+    Mz = np.arange(2.0) # 1 harmonic
 
 
 
@@ -383,8 +391,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     m = N - 2 # number of modes in y axis
 
     
-    generated_ff = np.zeros((Nx, 3*m, Nz)) # multiply y axis by 3 to take [u v w] into account
-#    spectral_ff = np.zeros((len(kx), 3*m, len(Mx), len(Mz)))
+    generated_ff = np.zeros((Nx, 3*m, Nz), dtype=np.complex128) # multiply y axis by 3 to take [u v w] into account
+    sing_vals = np.zeros((len(kx), len(Mx),len(Mz)))
     
     
     for index in range(0, len(kx)):
@@ -406,8 +414,11 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
             string_A = str(amplitudes[index])
         
         
+        text01='alpha:'+ str(fund_alpha)+ '  beta:'+ str(fund_beta)+ '    amplitude:'+ str(amplitudes[index])
+        print(Fore.RED + text01 + Style.RESET_ALL)
         
-        print('alpha:', fund_alpha, '  beta:', fund_beta, '    amplitude:', amplitudes[index])
+        print('kx = mx * alpha        kz = mz * beta')
+        
         # loop through the stationary modes
         for ia in range(0, len(streamwise_stationary_modes)):
             for ib in range(0, len(spanwise_stationary_modes)):
@@ -422,18 +433,31 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     if alpha == 0 or beta == 0:
                         continue
                     
-                    print('kx:', alpha, '    kz:', beta)
                     
+                    # kx = mx * fund_alpha
+                    # mx = Mx[ia]
+                    # same for Mz
+                    text02='(mx)kx: ('+str(Mx[ia])+') '+ str(alpha)+'    (mz)kz: ('+str(Mz[ib])+') '+ str(beta)
+                    print(Fore.BLUE + text02 + Style.RESET_ALL)
                     
                     omega = alpha * c
                     
-                    C, C_adj, A, w, y_cheb, D1= get_state_vectors(N, Re, Lx, Lz, alpha, beta, c)
+                    C, C_adj, A, w, y_cheb, D1, ResolventA2 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c)
                     I = np.eye(A.shape[0])
-                    L = -1j*omega*I - A
-                    RA = inv(L) # resolvent
-                    H = C*RA*C_adj # transfer function
+                    L = 1.0j*omega*I + A
+                    Linv = inv(L)
+                    ResolventA = -1.0* Linv # resolvent
+                    H = C*ResolventA*C_adj # transfer function
                     U_spectral, S, V_spectral = svd(H)
-                        
+                    
+                    
+                    #===========================================================
+                    sing_vals[index, Mx[ia], Mz[ib]] = S[0]
+                    # ideally one would have a percentage checker to only 
+                    # hold onto the singular values which are within 5/10/15%
+                    # of the highest singular value
+                    #===========================================================
+                    
                     if np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H) >= 1e-10:
                         nrm = str(np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H))
                         err = 'Something went wrong with the SVD, norm is '+nrm
@@ -444,6 +468,18 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     
                     divergence = 1.0j*alpha*resolvent_modes[0:m, 0] + np.dot(D1, resolvent_modes[m:2*m, 0]) + 1.0j*beta*resolvent_modes[2*m:3*m, 0]
                     div_norm = np.linalg.norm(divergence)
+                    
+                    if div_norm >= 1e-10:
+                        err = 'Something went wrong with the divergence criteria, norm is '+div_norm
+                        ut.error(err)
+                    
+                    
+#                    resolvent_modes2 = solve(w.T, U_spectral2)
+#                    divergence2 = 1.0j*alpha*resolvent_modes2[0:m, 0] + np.dot(D1, resolvent_modes2[m:2*m, 0]) + 1.0j*beta*resolvent_modes2[2*m:3*m, 0]
+#                    div_norm = np.linalg.norm(divergence2)
+                    
+                    
+                    
                     
                     u_tilde = amplitudes[index] * resolvent_modes[:, 0] 
 #                    u_tilde = amplitudes[index] * resolvent_modes[:, 0] * S[0]
@@ -465,7 +501,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     U_w = physical_ff.real[:, 2*m:3*m, :]
                     U = np.zeros((Nd, Nx, Ny, Nz))
 
-                    
+        print('')
 
     
     # Output the flow field as an ASCII file for channelflow to read in.
@@ -492,13 +528,86 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                         U[i, nx, ny, nz] = U_w[nx, ny, nz]
 
     
+    
+    
+    
+    L2Norm = np.linalg.norm(U)
+    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
+
+#    magn = 10.0
+#    U *= magn / L2Norm
+    
+
+    
+    
+    
+    # Interpolation to go from y_cheb toy_uniform
+    Ny = m
+    y_uniform = np.linspace(1.0, -1.0, Ny*1.0)
+    y_cheb = np.asarray(y_cheb)
+    y_cheb = np.squeeze(y_cheb)
+    
+    
+    U_u_uniform = np.zeros((Nx, m, Nz))
+    U_v_uniform = np.zeros((Nx, m, Nz))
+    U_w_uniform = np.zeros((Nx, m, Nz))
+    
+    for nx in range(0, Nx):
+        for nz in range(0, Nz):
+            uprofile = U_u[nx, :, nz] # 1-d vector
+            # fill value is the no-slip boundary condition
+            fu = interp1d(y_cheb, uprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fu = fu(y_uniform)
+            U_u_uniform[nx, :, nz] = fu
+            
+            
+            vprofile=U_v[nx, :, nz] # 1-d vector
+            fv = interp1d(y_cheb, vprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fv = fv(y_uniform)
+            U_v_uniform[nx, :, nz] = fv
+            
+            wprofile=U_w[nx, :, nz] # 1-d vector
+            fw = interp1d(y_cheb, wprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fw = fw(y_uniform)
+            U_w_uniform[nx, :, nz] = fw
+            
+            
+
+    
+#    
+#    plt.plot(y_cheb, uprofile, 'r-', y_uniform, fu, 'g--')
+#    plt.legend(['data', 'cubic'], loc='best')
+#    plt.grid(True)
+#    plt.show()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
     gen_ff = {}
     gen_ff['resolvent_flowField'] = U
+    
+    
+#    gen_ff['U'] = U_u_uniform
+#    gen_ff['V'] = U_v_uniform
+#    gen_ff['W'] = U_w_uniform
+    
     gen_ff['U'] = U_u
     gen_ff['V'] = U_v
     gen_ff['W'] = U_w
+    
+    
     gen_ff['X'] = x
-    gen_ff['Y'] = y
+#    gen_ff['Y'] = y_uniform
+    gen_ff['Y'] = y_cheb
     gen_ff['Z'] = z
 
     gen_ff['Nx'] = Nx
@@ -513,6 +622,9 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     gen_ff['kz'] = string_kz
     gen_ff['c'] = string_c
     gen_ff['A'] = string_A
+    
+    
+    
     
     
     
@@ -658,23 +770,26 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta, c):
     omega = alpha * c
     L = 1.0j*omega*I + A
     Linv = inv(L)
-    RA = -1.0*inv(L) # resolvent
+    ResolventA = -1.0*inv(L) # resolvent
     
     
     
     # we can alternatively construct the resolvent:
-    flooby = 1.0*alpha*((U - c)*Lap - d2U_dy2) - (del_hat_4 / Re)
+    UminusC2 = np.diag(U) - c
+    UminusC = np.identity(m) 
+    np.fill_diagonal(UminusC, UminusC2)
+    flooby = 1.0j*alpha*UminusC*Lap - 1.0j*alpha*d2U_dy2 - (del_hat_4 / Re)
     
     topleft = solve(Lap, flooby)
     topright = Z
-    bottomleft = 1.0*beta*dU_dy
-    bottomright = 1.0*alpha*(U - c) - (Lap / Re)
+    bottomleft = 1.0j*beta*dU_dy
+    bottomright = 1.0j*alpha*UminusC - (Lap / Re)
     
     
-    RA2 = np.vstack((np.hstack((topleft,topright)), np.hstack((bottomleft, bottomright))))
+    ResolventA2 = np.vstack((np.hstack((topleft,topright)), np.hstack((bottomleft, bottomright))))
     
     
-    return C, C_adj, A, w, y_cheb, D1
+    return C, C_adj, A, w, y_cheb, D1, ResolventA2
         
     
     
