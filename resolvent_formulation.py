@@ -147,7 +147,7 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
     physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
     generated_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-    
+
     lambda_x = 2.0*pi / kx[0]
     lambda_z = 2.0*pi / kz[0]
     Lx = lambda_x
@@ -373,11 +373,12 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
 #    plt.grid(True)
 #    plt.show()
     
-    
+
         
     gen_ff = {}
     gen_ff['resolvent_flowField'] = U
     
+
 #    gen_ff['U'] = U_u_uniform
 #    gen_ff['V'] = U_v_uniform
 #    gen_ff['W'] = U_w_uniform

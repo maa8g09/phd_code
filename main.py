@@ -33,6 +33,7 @@ startTimeLarge = datetime.now()
 fdary = [0, 'all', 'all', 16] # XY
 fdary = [0, 0, 'all', 'all'] # YZ
 
+
 def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
     """
     INPUTS:
@@ -169,13 +170,10 @@ if mac:
 elif linux:
     direct = '/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
     
+    
 else:
     direct = ''
     
-
-
-
-
 
 
 
@@ -221,11 +219,6 @@ a3b = 0.83j
 
 
 
-
-
-
-
-
 kx1a = 6.0
 kx1b = 6.0
 a1a = 1.0j
@@ -259,6 +252,7 @@ a3b = 0.83j
 kx = np.array([kx2a, kx2b, kx1a, kx1b, kx3a, kx3b])
 kz = np.array([kz2a, kz2b, kz1a, kz1b, kz3a, kz3b])
 amplitudes = np.array([a2a, a2b, a1a, a1b, a3a, a3b])
+
 
 
 #
