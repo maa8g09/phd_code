@@ -159,11 +159,12 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
 
 
 
-mac = False
-linux = True
+mac = True
+linux = False
 
 if mac:
-    direct = '/Users/arslan/Documents/work/wavenums-copy/wavepacket_6-0.0916434441829/unewt02'
+    direct = '/Users/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
+    
     
 elif linux:
     direct = '/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
