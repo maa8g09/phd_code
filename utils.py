@@ -188,7 +188,7 @@ def writeASCIIfile(data, directory):
     
     flowField = data['resolvent_flowField']
     
-    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".asc"
+#    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".asc"
     fileName = "/u0.asc"
     
     file = open(directory + fileName, "w")
@@ -343,4 +343,91 @@ def writeASCIIfile_general(data, directory):
     
     return 0
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def writeSpectralASCIIfile(data, directory):
     
+    flowField = data['spectral_ff']
+    fileName = "/u0_spec_rank-"+str(data['Rank'])+".asc"
+    file = open(directory + fileName, "w")
+    
+    for mx in range(0, data['Mx']):
+        for ny in range(0, data['Ny']):
+            for mz in range(0, data['Mz']):
+                for nd in range(0, data['Nd']):
+                    tmpReal = flowField[nd, mx, ny, mz].real
+                    tmpImag = flowField[nd, mx, ny, mz].imag
+#                    tmpReal = format(tmpReal, '.8f')
+#                    tmpImag = format(tmpImag, '.8f')
+                    
+                    output = '(' + str(tmpReal) + ', ' + str(tmpImag) + ')'
+#                    if tmpImag >= 0.0:                        
+#                        output = str(tmpReal) +'+'+ str(tmpImag)+'j'
+#                    elif tmpImag < 0.0:
+#                        output = str(tmpReal) + str(tmpImag)+'j'
+                    
+                    file.write(output + "\n")
+    
+    file.close()
+    
+    print('Boom, the SPECTRAL ASCII is done.')
+    
+    return 0
+    
+    
+    
+    
+def writeSpectralGEOMfile(data, directory):
+    
+    kx = data['kx']
+    kz = data['kz']
+    c = data['c']
+    A = data['A']
+    
+#    fileName = "/wave_packet_" + str(kx) + "_+-" + str(kz) + "_" + str(c) + "_" + str(A) + ".geom"
+    fileName = "/u0_spec_rank-"+str(data['Rank'])+".geom"
+    
+    file = open(directory + fileName, "w")
+    
+    
+#    file.write(str( int(len(data['Mx'])) ) + '\t\t\t\t\t\t%Mx' + "\n")
+#    file.write(str( int(len(data['Mz'])) ) + '\t\t\t\t\t\t%Mz' + "\n")
+    
+    
+    file.write(str( int(data['Nx']) ) + '\t\t\t\t\t\t%Nx' + "\n")
+    file.write(str( int(data['Ny']) ) + '\t\t\t\t\t\t%Ny' + "\n")
+    file.write(str( int(data['Nz']) ) + '\t\t\t\t\t\t%Nz' + "\n")
+    file.write(str( int(data['Nd']) ) + '\t\t\t\t\t\t%Nd' + "\n")
+    
+    
+    Lx = format( data['Lx'], '.16f')
+    Lz = format( data['Lz'], '.16f')
+    file.write(Lx + '\t\t%Lx' + "\n")
+    file.write(Lz + '\t\t%Lz' + "\n")
+    
+    lx = data['Lx'] / (2. * math.pi) 
+    lz = data['Lz'] / (2. * math.pi) 
+    file.write(str( lx ) + '\t\t%lx=Lx/(2pi)' + "\n")
+    file.write(str( lz ) + '\t\t%lz=Lz/(2pi)' + "\n")
+    
+    alpha = str(data['fund_alpha'])
+    file.write(str( alpha ) + '\t\t%alpha=2pi/Lx' + "\n")
+    gamma = str(data['fund_beta'])
+    file.write(str( gamma ) + '\t\t%gamma=2pi/Lz' + "\n")
+    
+    
+    file.close()
+    
+    return 0

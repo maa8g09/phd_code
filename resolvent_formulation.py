@@ -157,20 +157,18 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
 
     # Number of grid points
-    Nx = 32 # even
-    Nz = 33 # even
+    Nx = 34 # even
+    Nz = 35 # even
 
     # Stationary nodes along each axis
     # X axis
     Mx = Nx
-    Mx = np.arange((-Mx/2.0), (Mx/2.0)+1)
-#    Mx = np.arange(-5.0, 6.0) # 5 harmonics
+    Mx = np.arange((-Mx/2.0), (Mx/2.0)+1) # Full range of frequencies
     Mx = np.arange(-1.0, 2.0) # 1 harmonic
     
     # Z axis
     Mz = 0.5*(Nz) + 1.0
-    Mz = np.arange(0, Mz)
-#    Mz = np.arange(6.0) # 5 harmonics
+    Mz = np.arange(0, Mz) # full range of frequencies
     Mz = np.arange(2.0) # 1 harmonic
 
 
@@ -185,7 +183,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
 
     
     generated_ff = np.zeros((Nx, 3*m, Nz), dtype=np.complex128) # multiply y axis by 3 to take [u v w] into account
+    u_tilde_total = np.zeros((len(Mx), 3*m, len(Mz)), dtype=np.complex128)
+#    u_tilde_total = np.asmatrix(u_tilde_total)
     sing_vals = np.zeros((len(kx), len(Mx),len(Mz)))
+    
     
     
     for index in range(0, len(kx)):
@@ -234,8 +235,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     print(Fore.BLUE + text02 + Style.RESET_ALL)
                     
                     omega = alpha * c
-                    
-                    C, C_adj, A, w, y_cheb, D1, ResolventA2 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c)
+                    laminar_base_flow = True
+                    C, C_adj, A, w, y_cheb, D1 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c, laminar_base_flow)
                     I = np.eye(A.shape[0])
                     L = 1.0j*omega*I + A
                     Linv = inv(L)
@@ -263,36 +264,20 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
                     div_norm = np.linalg.norm(divergence)
                     
                     if div_norm >= 1e-10:
-                        err = 'Something went wrong with the divergence criteria, norm is '+div_norm
+                        err = 'Something went wrong with the divergence criteria, norm is ' + str(div_norm)
                         ut.error(err)
                     
-                    
-#                    resolvent_modes2 = solve(w.T, U_spectral2)
-#                    divergence2 = 1.0j*alpha*resolvent_modes2[0:m, 0] + np.dot(D1, resolvent_modes2[m:2*m, 0]) + 1.0j*beta*resolvent_modes2[2*m:3*m, 0]
-#                    div_norm = np.linalg.norm(divergence2)
-                    
-                    
-                    
-                    
-                    u_tilde = amplitudes[index] * resolvent_modes[:, 0] 
-#                    u_tilde = amplitudes[index] * resolvent_modes[:, 0] * S[0]
-#                    u_tilde = resolvent_modes[:, 0] * S[0]
-#                    u_tilde += np.conjugate(u_tilde)
+                    # u_tilde = chi * Psi
+                    u_tilde = amplitudes[index] * resolvent_modes[:, 0] # Rank 1 approximation
                     u_tilde = np.asmatrix(u_tilde)
-                    
-#                    spectral_ff[index, :, ia, ib] = np.squeeze(u_tilde[:,0])
+                    temp = np.asarray(u_tilde)
+                    u_tilde_total[ia, :, ib] += temp[:, 0]
                     
                     
                     physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
                     physical_ff += ifft(u_tilde[:,0], alpha, beta, c, x, z, t, Lx, Lz, m) # inverse fourier transform
             
                     generated_ff += physical_ff
-
-
-                    U_u = physical_ff.real[:,   0:m  , :]
-                    U_v = physical_ff.real[:,   m:2*m, :]
-                    U_w = physical_ff.real[:, 2*m:3*m, :]
-                    U = np.zeros((Nd, Nx, Ny, Nz))
 
         print('')
 
@@ -325,13 +310,10 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
     
     L2Norm = np.linalg.norm(U)
-    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
+#    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
 
 #    magn = 10.0
 #    U *= magn / L2Norm
-    
-
-    
     
     
     # Interpolation to go from y_cheb toy_uniform
@@ -363,11 +345,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
             fw = interp1d(y_cheb, wprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
             fw = fw(y_uniform)
             U_w_uniform[nx, :, nz] = fw
-            
-            
 
-    
-#    
+
 #    plt.plot(y_cheb, uprofile, 'r-', y_uniform, fu, 'g--')
 #    plt.legend(['data', 'cubic'], loc='best')
 #    plt.grid(True)
@@ -379,19 +358,18 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     gen_ff['resolvent_flowField'] = U
     
 
-#    gen_ff['U'] = U_u_uniform
-#    gen_ff['V'] = U_v_uniform
-#    gen_ff['W'] = U_w_uniform
-    
-    gen_ff['U'] = U_u
-    gen_ff['V'] = U_v
-    gen_ff['W'] = U_w
-    
+    gen_ff['U'] = U_u_uniform
+    gen_ff['V'] = U_v_uniform
+    gen_ff['W'] = U_w_uniform
+#    gen_ff['U'] = U_u
+#    gen_ff['V'] = U_v
+#    gen_ff['W'] = U_w
+#    
     
     gen_ff['X'] = x
-#    gen_ff['Y'] = y_uniform
-    gen_ff['Y'] = y_cheb
     gen_ff['Z'] = z
+    gen_ff['Y'] = y_uniform
+#    gen_ff['Y'] = y_cheb
 
     gen_ff['Nx'] = Nx
     gen_ff['Ny'] = m
@@ -408,7 +386,8 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
     
     
     
-    
+    gen_ff['spectral'] = u_tilde_total
+#    gen_ff[]
     
     
     return gen_ff
@@ -418,27 +397,34 @@ def main_resolvent_analysis(N, Re, kx, kz, c, amplitudes, modesOnly, data, fourd
 
 
 
-def main_gibson_soln(data):
 
-    t = 0
-    c = 0.5
+
+
+def main_gibson_soln(data, rank):
+
+    c = 1.0
+    string_c = format(c, '.4f')
     Re = 400
 
+    gen_ff = {}
+    
+    
+    
     if data['flowField']['is_spectral'] == True:
         u_hat = data['flowField']['spectral']
-        U_u_gibson = data['flowField']['physical'][0,:,:,:]
-        U_v_gibson = data['flowField']['physical'][1,:,:,:]
-        U_w_gibson = data['flowField']['physical'][2,:,:,:]
-        
         u_hat = np.concatenate((u_hat[0,:,:,:],
                                 u_hat[1,:,:,:],
                                 u_hat[2,:,:,:]), 
                                 axis=1)
         
-        Nx    = data['geometry']['physical']['Nx']
+        Mx    = data['geometry']['spectral']['kx']
+        Nx    = Mx
+        Mz    = data['geometry']['spectral']['kz']
+        Nz    = 2*(Mz - 1)
+        
         Ny    = data['geometry']['spectral']['Ny']
         N     = Ny + 2
-        Nz    = data['geometry']['physical']['Nz']
+        
         Nd    = data['geometry']['spectral']['Nd']
         
         Lx    = data['geometry']['physical']['Lx']
@@ -447,8 +433,11 @@ def main_gibson_soln(data):
         x     = np.linspace(0.0, Lx, Nx)
         z     = np.linspace(-Lz/2.0, Lz/2.0, Nz)
         
-        alpha = data['geometry']['physical']['alpha']
-        beta  = data['geometry']['physical']['gamma']
+        fund_alpha = data['geometry']['physical']['alpha']
+        fund_beta  = data['geometry']['physical']['gamma']
+        gen_ff['fund_alpha'] = fund_alpha
+        gen_ff['fund_beta']  = fund_beta
+        
         
         
     elif data['flowField']['is_physical'] == True:
@@ -463,10 +452,22 @@ def main_gibson_soln(data):
         beta  = data['geometry']['physical']['gamma']
         
         # Fourier transform the channelflow solution
-        u_hat = fft_flowField(data)
+#        u_hat = fft_flowField(data)
     
-
-    
+        
+#    u_hat_total = np.zeros((Nx, 3*Ny, Nz), dtype=np.complex128) # Looking at the complex conjugate of the coefficients
+#    
+#    for nx in range(0, Nx):
+#        plane = u_hat[nx, :, :]
+#        plane = plane[:, 1:-1]
+#        plane = np.conj(np.fliplr(plane))
+#        untoched_plane = u_hat[nx, :, :]
+#        total_plane = np.hstack((plane, untoched_plane))
+#        
+#        u_hat_total[nx, :, :] = total_plane
+        
+        
+        
     # Now we know the fundamental wavenumbers and the geometrical
     # dimensions of the physical domain we are studying.
     
@@ -480,55 +481,22 @@ def main_gibson_soln(data):
     Mx = np.arange((-Nx/2.0)+1, (Nx/2.0)+1)
 #    Mx = np.arange(-1.0, 2.0) # 1 harmonic
     
-    
-    
     # Z axis
-    Mz = 0.5*(Nz) + 1.0
-    Mz = np.arange(0, Mz)
-#    Mz = np.arange((-Nz/2.0)+1, (Nz/2.0)+1)
+#    Mz = np.arange((-Nz/2.0)+1, (Nz/2.0)+1) # only if youre looking at the whole spectral field.
+    Mz = np.arange(0, (Nz/2.0 + 1))
 #    Mz = np.arange(2.0) # 1 harmonic
     
-    kx = Mx * alpha
-    kz = Mz * beta
-    m = N - 2 # Ny
-    
-    generated_ff = np.zeros((Nx, 3*m, Nz), dtype=np.complex128) # multiply y axis by 3 to take [u v w] into account
-    sing_vals = np.zeros((1, len(Mx),len(Mz)))    
+    kx = Mx * fund_alpha      # list of wavenumbers to use (modes multiplied by fundamental alpha)
+    kz = Mz * fund_beta       # list of wavenumbers to use (modes multiplied by fundamental beta)
+    m  = N - 2                # Ny
     
     
     
-    # Making the physical flow field independently.
-    for ikx in range(0, len(kx)):
-        for ikz in range(0, len(kz)):
-            alpha = kx[ikx]
-            beta  = kz[ikz]
-            
-            text02='(mx)kx: ('+str(Mx[ikx])+') '+ str(alpha)+'    (mz)kz: ('+str(Mz[ikz])+') '+ str(beta)
-            print(Fore.BLUE + text02 + Style.RESET_ALL)
-            
-            
-            u_foui = np.asmatrix(u_hat[ikx, :, ikz]).T
-            
-            
-            u_phys = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-            u_phys += ifft(u_foui, alpha, beta, c, x, z, 0, Lx, Lz, m) # inverse fourier transform
-            
-            generated_ff += u_phys
-            
-    
-    
-    U = np.zeros((Nd, Nx, Ny, Nz))
-    U_u = generated_ff.real[:,   0:m  , :]
-    U_v = generated_ff.real[:,   m:2*m, :]
-    U_w = generated_ff.real[:, 2*m:3*m, :]
-    
-    
-    
-    
-    
-    
-    generated_ff = np.zeros((Nx, 3*m, Nz), dtype=np.complex128) # multiply y axis by 3 to take [u v w] into account
-    
+    my_u_hat  = np.zeros((len(kx),    3*Ny, len(kz)), dtype=np.complex128)
+    sing_vals = np.zeros((      1, len(kx), len(kz)))
+
+
+
     for ikx in range(0, len(kx)):
         for ikz in range(0, len(kz)):
             
@@ -538,6 +506,7 @@ def main_gibson_soln(data):
             text02='(mx)kx: ('+str(Mx[ikx])+') '+ str(alpha)+'    (mz)kz: ('+str(Mz[ikz])+') '+ str(beta)
             print(Fore.BLUE + text02 + Style.RESET_ALL)
             
+            my_u_hat[ikx, :, ikz] = u_hat[ikx, :, ikz]
             
             if alpha == 0 or beta == 0:
                 continue
@@ -545,15 +514,15 @@ def main_gibson_soln(data):
             
             omega=c*alpha
             
-            C, C_adj, A, w, y_cheb, D1, ResolventA2 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c, False)
+            C, C_adj, A, w, y_cheb, D1 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c, False)
             
             # Now make the resolvent.
             I = np.eye(A.shape[0])
             L = 1.0j*omega*I + A
             Linv = inv(L)
-            ResolventA = -1.0* Linv # resolvent
-            H = C*ResolventA*C_adj # transfer function
-            U_spectral, S, V_spectral = svd(H)
+            ResolventA = -1.0* Linv                 # resolvent
+            H = C*ResolventA*C_adj                  # transfer function
+            U_spectral, S, V_spectral = svd(H)      # SVD
             
             
             #===========================================================
@@ -576,59 +545,88 @@ def main_gibson_soln(data):
             div_norm = np.linalg.norm(divergence)
             
             if div_norm >= 1e-10:
-                err = 'Something went wrong with the divergence criteria, norm is '+str(div_norm)
+                err = 'Something went wrong with the divergence criteria, norm is ' + str(div_norm)
                 ut.error(err)
         
             
             
             # We know u_tilde
-            u_tilde = u_hat[ikx, :, ikz]
+            u_tilde = u_hat[ikx, :, ikz]               # Vector of size (3*Ny, 1)     [ (row, col) ]
             
-            rank = 3*m
+            
+            
             rank = min(rank, 3*m)
-            # chi  = eta * sigma
+            # chi  = sigma * eta
             chi = get_scalars(u_tilde, U_spectral, w, m, rank)            
             
             
             # Depending on the rank we can see what the fluctuations will look 
             # like
             chi = np.asarray(chi)
-            chi = np.asmatrix(chi[:rank])
-            
-            
-            chi_real = chi.real
-            chi_imag = chi.imag
+            chi = np.asmatrix(chi)
+#            chi_real = chi.real
+#            chi_imag = chi.imag
             
             
             # eta 
             sigma = S[:rank]
             sigma = np.asmatrix(np.diag(sigma))
             eta = solve(sigma, chi)
-            eta_real = eta.real
-            eta_imag = eta.imag
+#            eta_real = eta.real
+#            eta_imag = eta.imag
             
-            U_spectral = np.asmatrix(U_spectral)
             
             
             # ortho test
             result = U_spectral * U_spectral.H
             u_tilde3 = U_spectral[: , :rank] * chi         
             
+            
             # u_tilde2 should be the same as u_tilde
             result = np.asmatrix(u_tilde).T - u_tilde3
             
             result = np.linalg.norm(result)
             
+            text03='The norm is: '+str(result)
+            if result <= 1e-10:
+                print(Back.GREEN + text03 + Style.RESET_ALL)
+            elif result >= 1e-10 and result <= 1e-5:
+                print(Back.YELLOW + text03 + Style.RESET_ALL)
+            else:
+                print(Back.RED + text03 + Style.RESET_ALL)
+                
             
-            physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
-            physical_ff += ifft(u_tilde3, alpha, beta, c, x, z, t, Lx, Lz, m) # inverse fourier transform
+            
+            
+            my_u_hat[ikx, :, ikz] = np.squeeze(np.asarray(u_tilde3))
+
+#            physical_ff = np.zeros((len(x), 3*m, len(z)), dtype=np.complex128)
+#            physical_ff += ifft(u_tilde3, alpha, beta, c, x, z, t, Lx, Lz, m) # inverse fourier transform
+#    
+#            generated_ff += physical_ff
+#
+#
+#            U_u = physical_ff.real[:,   0:m  , :]
+#            U_v = physical_ff.real[:,   m:2*m, :]
+#            U_w = physical_ff.real[:, 2*m:3*m, :]
+            
+            
+            
+            
     
-            generated_ff += physical_ff
+    # Difference between My Fourier flow field
+    # compared to the Gibson flow field.
+    diff = np.abs(u_hat - my_u_hat)
+    diff = np.linalg.norm(diff)
+    text04='The total flow field norm is: '+str(diff)
+    print('\n',Fore.WHITE + Back.MAGENTA + text04 + Style.RESET_ALL,'\n')
 
 
-            U_u = physical_ff.real[:,   0:m  , :]
-            U_v = physical_ff.real[:,   m:2*m, :]
-            U_w = physical_ff.real[:, 2*m:3*m, :]
+
+            
+            
+            
+            
             
             
     # Output the flow field as an ASCII file for channelflow to read in.
@@ -640,26 +638,30 @@ def main_gibson_soln(data):
     # u[i, nx, ny, nz]
     # so:
     U = np.zeros((Nd, Nx, Ny, Nz))
-    U_u = generated_ff.real[:,   0:m  , :]
-    U_v = generated_ff.real[:,   m:2*m, :]
-    U_w = generated_ff.real[:, 2*m:3*m, :]
-    for i in range(0, Nd):
-        for nx in range(0, Nx):
-            for ny in range(0, Ny):
-                for nz in range(0, Nz):
-                    if i == 0: # u direction
-                        U[i, nx, ny, nz] = U_u[nx, ny, nz]
-                    elif i == 1: # v direction
-                        U[i, nx, ny, nz] = U_v[nx, ny, nz]
-                    elif i == 2: # w direction
-                        U[i, nx, ny, nz] = U_w[nx, ny, nz]
+    generated_ff = np.zeros((Nx, 3*m, Nz))
+    U_u = generated_ff[:,   0:m  , :]
+    U_v = generated_ff[:,   m:2*m, :]
+    U_w = generated_ff[:, 2*m:3*m, :]
+#    for i in range(0, Nd):
+#        for nx in range(0, Nx):
+#            for ny in range(0, Ny):
+#                for nz in range(0, Nz):
+#                    if i == 0: # u direction
+#                        U[i, nx, ny, nz] = U_u[nx, ny, nz]
+#                    elif i == 1: # v direction
+#                        U[i, nx, ny, nz] = U_v[nx, ny, nz]
+#                    elif i == 2: # w direction
+#                        U[i, nx, ny, nz] = U_w[nx, ny, nz]
 
     
     
     
     
     L2Norm = np.linalg.norm(U)
-    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
+#    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
+
+
+
 
 #    magn = 10.0
 #    U *= magn / L2Norm
@@ -700,8 +702,6 @@ def main_gibson_soln(data):
             
             
 
-    
-#    
 #    plt.plot(y_cheb, uprofile, 'r-', y_uniform, fu, 'g--')
 #    plt.legend(['data', 'cubic'], loc='best')
 #    plt.grid(True)
@@ -709,22 +709,22 @@ def main_gibson_soln(data):
     
     
         
-    gen_ff = {}
     gen_ff['resolvent_flowField'] = U
     
-#    gen_ff['U'] = U_u_uniform
-#    gen_ff['V'] = U_v_uniform
-#    gen_ff['W'] = U_w_uniform
+    gen_ff['U'] = U_u_uniform
+    gen_ff['V'] = U_v_uniform
+    gen_ff['W'] = U_w_uniform
     
-    gen_ff['U'] = U_u
-    gen_ff['V'] = U_v
-    gen_ff['W'] = U_w
+#    gen_ff['U'] = U_u
+#    gen_ff['V'] = U_v
+#    gen_ff['W'] = U_w
     
     
     gen_ff['X'] = x
-#    gen_ff['Y'] = y_uniform
-    gen_ff['Y'] = y_cheb
     gen_ff['Z'] = z
+    
+    gen_ff['Y'] = y_uniform
+#    gen_ff['Y'] = y_cheb
 
     gen_ff['Nx'] = Nx
     gen_ff['Ny'] = m
@@ -734,10 +734,32 @@ def main_gibson_soln(data):
     gen_ff['Lx'] = Lx
     gen_ff['Lz'] = Lz
     
-    gen_ff['kx'] = string_kx
-    gen_ff['kz'] = string_kz
+    gen_ff['kx'] = alpha
+    gen_ff['kz'] = beta
     gen_ff['c'] = string_c
-    gen_ff['A'] = string_A
+    gen_ff['A'] = 0
+    
+    
+    U_hat = np.zeros((Nd, Nx, Ny, Nz), dtype=np.complex128)
+    U_hat_u = my_u_hat[:,   0:m  , :]
+    U_hat_v = my_u_hat[:,   m:2*m, :]
+    U_hat_w = my_u_hat[:, 2*m:3*m, :]
+    for i in range(0, Nd):
+        for mx in range(0, len(Mx)):
+            for ny in range(0, Ny):
+                for mz in range(0, len(Mz)):
+                    if i == 0: # u direction
+                        U_hat[i, mx, ny, mz] = U_hat_u[mx, ny, mz]
+                    elif i == 1: # v direction
+                        U_hat[i, mx, ny, mz] = U_hat_v[mx, ny, mz]
+                    elif i == 2: # w direction
+                        U_hat[i, mx, ny, mz] = U_hat_w[mx, ny, mz]
+    
+    
+    gen_ff['spectral_ff'] = U_hat
+    gen_ff['Mx'] = len(Mx)
+    gen_ff['Mz'] = len(Mz)
+    gen_ff['Rank'] = rank
     
     return gen_ff
 
@@ -901,7 +923,7 @@ def get_state_vectors(N, Re, Lx, Lz, alpha, beta, c, laminarBaseFlow):
     ResolventA2 = np.vstack((np.hstack((topleft,topright)), np.hstack((bottomleft, bottomright))))
     
     
-    return C, C_adj, A, w, y_cheb, D1, ResolventA2
+    return C, C_adj, A, w, y_cheb, D1
         
     
     
@@ -1001,10 +1023,18 @@ def fft(signal, kx, kz, c, x, z, t, Lx, Lz):
 
 
 
+
+
+
+
+
 def get_scalars(u_hat, resolvent_modes, w, m, rank):
 
     dim=rank
 
+    #========================================================================
+    # Projecting with the required amount of column vectors==================
+    #========================================================================
     resolvent_modes = np.asmatrix(resolvent_modes)
     psi = resolvent_modes[: , :dim] # column vectors
     
@@ -1020,7 +1050,59 @@ def get_scalars(u_hat, resolvent_modes, w, m, rank):
     
     chi = psi_star * u_hat
     
+    
+    
+    
+    
+    #========================================================================
+    # Projecting with the full number of column vectors======================
+    #========================================================================
+#    psi_full = resolvent_modes
+#    
+#    psi_full_star = psi_full.H
+#    
+#    chi_full = np.zeros((psi_full.shape[0], 1), dtype=np.complex128)
+#    
+#    chi_full = psi_full_star * u_hat
+    
+    
+    
+    #========================================================================
+    # Conclusion: It doesn't make a difference===============================
+    #========================================================================
+    
+    
     return chi
     
-#            Mz = beta  * np.arange((np.ceil(-Nz/2.0)+1.0), (np.ceil(Nz/2.0)+1.0), 1.0)
-#            Mz = beta  * np.arange((np.ceil(-Nz/2.0)+1.0), (np.ceil(Nz/2.0)+1.0), 1.0)
+    
+def fft_test(Nx, Ny, Nz, U_u_gibson, u_hat_u):
+    
+        # Lets see if we can get u_hat form u_phy of Gibson
+    # Only looking at the streamwise compoenent of the velocity:
+
+    # Going through each y grid point taking each xz-plane:
+    test_u_hat = np.zeros((Nx, Ny, Nz), dtype=np.complex128)
+    for y in range(0, Ny):
+        xzplane = U_u_gibson[:, y, :]
+        xzplane_hat = np.fft.fft2(xzplane)
+        test_u_hat[:, y, :] = xzplane_hat
+        
+
+    test_res      = np.abs(u_hat_u - test_u_hat)
+    test_res_norm = np.linalg.norm(test_res)
+
+    
+    
+    # Alternatively we could Fourier transform it in one go:
+    test_u_hat2 = np.zeros((Nx, Ny, Nz), dtype=np.complex128)
+    test_u_hat2 = np.fft.fft2(U_u_gibson, axes=(0,2))
+    
+    test_res2      = np.abs(u_hat_u - test_u_hat2)
+    test_res_norm2 = np.linalg.norm(test_res2)
+    
+    
+    return 0
+    
+    
+    
+    

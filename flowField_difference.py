@@ -6,7 +6,7 @@ import math
 def diff_check(directory, ff_1, ff_2):
     
     
-    u1 = np.zeros((3, 32, 35, 32))
+    u1 = np.zeros((3, 48, 35, 48))
     u2 = u1
     
     
@@ -37,7 +37,7 @@ def diff_check(directory, ff_1, ff_2):
             u2[nd, nx, ny, nz] = vel
     f.close()
     
-    threshold = 1e-8
+    threshold = 1e-10
     
     Nd = u1.shape[0]
     Nx = u1.shape[1]
@@ -69,7 +69,7 @@ def diff_check(directory, ff_1, ff_2):
     return 0
           
 
-directory='/home/arslan/Documents/work/channelflow-related/database_solns/HKW/equilibria/eq4/nonlinear_solver/best_soln_ascii/differences'
-ff_1='eq4.asc'
-ff_2='ubest.asc'
+directory='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ5/temp'
+ff_1='eq5.asc'
+ff_2='eq5-from-ASCII.asc'
 diff_check(directory, ff_1, ff_2)

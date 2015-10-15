@@ -188,10 +188,10 @@ def plot2D_modes(flowField, four_d_array, three_d):
         cbar = plt.colorbar(CS)
         cbar.ax.set_ylabel(cbar_t)
     
-#        if quiver:
-#            # We will be plotting the quiver plots,
-#            Q = plt.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v), 
-#                           angles='xy', scale_units='xy', scale=0.0025)
+        if quiver:
+            # We will be plotting the quiver plots,
+            Q = plt.quiver(axis_x, axis_y,quiv_2D_u, quiv_2D_v, 
+                           angles='xy', scale_units='xy', scale=0.5)
                            
     
         plt.xlabel(axis_x_t)

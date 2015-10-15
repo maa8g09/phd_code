@@ -30,11 +30,11 @@ import subprocess as sb
 startTimeLarge = datetime.now()
 
 
-fdary = [0, 'all', 'all', 16] # XY
+fdary = [0, 'all', 'all', 0] # XY # 0 24 36
 fdary = [0, 0, 'all', 'all'] # YZ
 
 
-def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
+def main(directory, fourdarray, N, Re, kx, kz, c, A, i, d):
     """
     INPUTS:
      directory:  directory where the flow solution is kept (downloaded from 
@@ -68,8 +68,8 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
     data = {}
     
     modesOnly = False
-    perturbed = False
-
+#    perturbed = False
+    outputPhysical = False
 
     # Check to see if there are any 'unewt' files in the directory...
 #    files = [fi for fi in os.listdir(direc) if os.path.isfile(os.path.join(direc,fi))]
@@ -98,7 +98,7 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
         
         # Resolvent Formulation
         generated_flowField = rf.main_resolvent_analysis(N, Re, kx, kz, c, A, modesOnly, data, fourdarray)
-        up.plot2D_modes(generated_flowField, fourdarray, True)
+#        up.plot2D_modes(generated_flowField, fourdarray, True)
         
 #        
 #        generated_flowField['read']=False
@@ -106,11 +106,22 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
 #            perturbedField = ut.perturbFlowField(generated_flowField)
 #            up.plot2D_modes(perturbedField, fourdarray, True)
 #        
-#        directory = '/home/arslan/Documents/work/channelflow-related/edge_state_varying_amplitude8'
-#        directory = ut.makeSolutionDirectory(generated_flowField, directory, n, re, kx, kz, c, A, i)
-#        ut.writeASCIIfile(generated_flowField, directory)
-#        ut.writeGEOMfile(generated_flowField, directory)
-#        
+        #directory = '/home/arslan/Documents/work/channelflow-related/edge_state_varying_amplitude8'
+        directory = d
+        directory = ut.makeSolutionDirectory(generated_flowField, directory, n, re, kx, kz, c, A, i)
+        
+        
+        if outputPhysical:
+            ut.writeASCIIfile(generated_flowField, directory)
+            ut.writeGEOMfile(generated_flowField, directory)
+        
+        else:
+            directory = directory + '/spectral_construct'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            ut.writeSpectralASCIIfile(generated_flowField, directory)
+            ut.writeSpectralGEOMfile(generated_flowField, directory)
+        
 #        
         
         
@@ -125,29 +136,34 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
         # http://www.jesshamrick.com/2011/05/18/an-introduction-to-classes-and-inheritance-in-python/
         #
         data = rc.main_read_construct(directory, fourdarray)
-#        
-#        if data['flowField']['is_physical'] == True:
-#            up.plot2D(data['velslice'])
-
-#        if perturbed:
-#            data['read']=True
-#            perturbedField = ut.perturbFlowField(data)
-#            ut.writeASCIIfile_general(perturbedField, directory)
-#            perturbed_slice = rc.get_vel_slice()##
-#            up.plot2D(perturbed_slice)
-
-#        # Resolvent Formulation
-        generated_flowField = rf.main_gibson_soln(data)
-#        up.plot2D_modes(generated_flowField, fourdarray, True)
-
-
         
+        if data['flowField']['is_physical'] == True:
+            u = data['flowField']['physical'][0,:,:,:]
+            v = data['flowField']['physical'][1,:,:,:]
+            w = data['flowField']['physical'][2,:,:,:]
+            up.plot2D(data['velslice'])
 
+###        else:
+#        # Resolvent Formulation
+#        rank = 1
 #        
-#        directory = '/home/arslan/Documents'
-#        directory = ut.makeSolutionDirectory(generated_flowField, directory)
-#        ut.writeASCIIfile(generated_flowField, directory)
-#        ut.writeGEOMfile(generated_flowField, directory)
+#        generated_flowField = rf.main_gibson_soln(data, rank)
+#        
+##        up.plot2D_modes(generated_flowField, fourdarray, True)
+#        
+#        if outputPhysical:
+#            ut.writeASCIIfile(generated_flowField, directory)
+#            ut.writeGEOMfile(generated_flowField, directory)
+#        
+#        else:
+#            directory = directory + '/reconstructed'
+#            
+#            if not os.path.exists(directory):
+#                os.makedirs(directory)
+#                
+#            ut.writeSpectralASCIIfile(generated_flowField, directory)
+#            ut.writeGEOMfile(generated_flowField, directory)
+
 
 
     ut.printSectionHeader()
@@ -160,8 +176,8 @@ def main(directory, fourdarray, N, Re, kx, kz, c, A, i):
 
 
 
-mac = True
-linux = False
+mac = False
+linux = True
 
 if mac:
     direct = '/Users/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
@@ -169,6 +185,22 @@ if mac:
     
 elif linux:
     direct = '/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
+#    direct = '/home/arslan/Desktop/asciibinarytests/wavepacket_000_4modes_(-0.045+0j)/fromFF2ASC'
+    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/from_phys'
+    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/from_spec'
+    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3'
+    #Original Executables
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/original_executables/original_ff2ascii'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/original_executables/original_ff2ascii/original_ascii2ff'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/new_executables_spec_only'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/findsoln_rank-1/unewt01'
+    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/findsoln_rank-1/pre-unewt0'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/findsoln_original/pre-unewt0'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/findsoln_rank-full/pre-unewt0'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/TEMP'
+#    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ3/TEMP/back2ff'
+    direct='/home/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ5/fromASCII/fromFF'
+
     
     
 else:
@@ -180,96 +212,189 @@ else:
 
 
 
-n = 37
-re = 400
 
 
 
-# Ideal response mode
-# K1
+
+#=================== K1
 kx1a = 6.0
 kx1b = 6.0
-a1a = 1.0j
 
 kz1a = 6.0
 kz1b = -6.0
+
+a1a = 1.0j
 a1b = 1.0j
 
-# K2
+
+
+#=================== K2
 kx2a = 1.0
 kx2b = 1.0
-a2a = -4.5
 
 kz2a = 6.0
 kz2b = -6.0
+
+a2a = -4.5
 a2b = -4.5
 
 
+
+#=================== K3
 kx3a = 7.0
 kx3b = 7.0
-a3a = 0.83j
 
 kz3a = 12.0
 kz3b = -12.0
-a3b = 0.83j
 
-
-
-
-
-
-
-kx1a = 6.0
-kx1b = 6.0
-a1a = 1.0j
-
-kz1a = 6.0
-kz1b = -6.0
-a1b = 1.0j
-
-# K2
-kx2a = 0.8
-kx2b = 0.8
-a2a = -4.5
-
-kz2a = 5.0
-kz2b = -5.0
-a2b = -4.5
-
-# K3
-kx3a = 0.3
-kx3b = 0.3
 a3a = 0.83j
-
-kz3a = 1.0
-kz3b = -1.0
 a3b = 0.83j
 
 
 
 
+#=================== K1-STAR
+kx1a_star = 6.0
+kx1b_star = 6.0
 
-kx = np.array([kx2a, kx2b, kx1a, kx1b, kx3a, kx3b])
-kz = np.array([kz2a, kz2b, kz1a, kz1b, kz3a, kz3b])
-amplitudes = np.array([a2a, a2b, a1a, a1b, a3a, a3b])
+kz1a_star = 8.0
+kz1b_star = -8.0
+
+a1a_star = 1.0j
+a1b_star = 1.0j
 
 
 
+#=================== K3-STAR
+kx3a_star = 7.0
+kx3b_star = 7.0
+
+kz3a_star = 14.0
+kz3b_star = -14.0
+
+a3a_star = 0.83j
+a3b_star = 0.83j
+
+
+
+
+
+
+
+
+
+
+
+#=================== K4
+kx4a = 0.3
+kx4b = 0.3
+
+kz4a = 3.0
+kz4b = -3.0
+
+a4a = 0.3
+a4b = 0.3
+
+#=================== K5
+kx5a = 1.5
+kx5b = 1.5
+
+kz5a = 4.0
+kz5b = -4.0
+
+a5a = 1.0
+a5b = 1.0
+
+#=================== K6
+kx6a = 2.1
+kx6b = 2.1
+
+kz6a = 5.0
+kz6b = -5.0
+
+a6a = 3.0
+a6b = 3.0
+
+#=================== K7
+kx7a = 1.0
+kx7b = 1.0
+
+kz7a = 6.0
+kz7b = -6.0
+
+a7a = 2.0
+a7b = 2.0
+
+
+
+
+
+
+
+
+
+
+
+
+
+## KA
+#kx = np.array([kx1a, kx1b])
+#kz = np.array([kz1a, kz1b])
+#amplitudes = np.array([a1a, a1b])
 #
-### Test K
-#kx1_a = 1.0
-#kx1_b = 1.0
-#a1_a = -4.5
-#
-#kz1_a = 6.0
-#kz1_b = -6.0
-#a1_b = -4.5
-#
-#kx = np.array([kx1_a, kx1_b])
-#kz = np.array([kz1_a, kz1_b])
-#amplitudes = np.array([a1_a, a1_b])
+#kx = np.array([kx2a, kx2b])
+#kz = np.array([kz2a, kz2b])
+#amplitudes = np.array([a2a, a2b])
+#d = '/home/arslan/Documents/work/channelflow-related/set01/Re00400/kA/ampls01'
 
 
+
+
+
+
+## KB
+#kx = np.array([kx2a, kx2b, kx1a, kx1b])
+#kz = np.array([kz2a, kz2b, kz1a, kz1b])
+#amplitudes = np.array([a2a, a2b, a1a, a1b])
+#d = '/home/arslan/Documents/work/channelflow-related/set01/Re01800/kB/ampls01'
+##d = '/home/arslan/Desktop/asciibinarytests'
+
+
+
+
+
+## KC
+#kx = np.array([kx2a, kx2b, kx1a, kx1b, kx3a, kx3b])
+#kz = np.array([kz2a, kz2b, kz1a, kz1b, kz3a, kz3b])
+#amplitudes = np.array([a2a, a2b, a1a, a1b, a3a, a3b])
+#d = '/home/arslan/Documents/work/channelflow-related/set01/Re01800/kC/ampls01'
+
+
+
+
+
+## KD
+#kx = np.array([kx2a, kx2b, kx1a_star, kx1b_star, kx3a_star, kx3b_star])
+#kz = np.array([kz2a, kz2b, kz1a_star, kz1b_star, kz3a_star, kz3b_star])
+#amplitudes = np.array([a2a, a2b, a1a_star, a1b_star, a3a_star, a3b_star])
+#d = '/home/arslan/Documents/work/channelflow-related/set01/Re01800/kD/ampls01'
+
+
+
+
+
+# KE
+kx = np.array([kx4a, kx4b, kx5a, kx5b, kx6a, kx6b, kx7a, kx7b])
+kz = np.array([kz4a, kz4b, kz5a, kz5b, kz6a, kz6b, kz7a, kz7b])
+amplitudes = np.array([a4a, a4b, a5a, a5b, a6a, a6b, a7a, a7b])
+d = '/home/arslan/Documents/work/channelflow-related/set01/Re01800/kE/ampls01'
+
+
+
+
+
+n = 37
+re = 400
 c = 2.0/3.0
 
 
@@ -277,18 +402,53 @@ c = 2.0/3.0
 if linux:
     ampl_weights = np.array([1.0])
 else:
-    ampl_weights = np.logspace(-1.65, -1.75, 10)
-    ampl_weights = np.logspace(-1.68, -1.70, 10)
-    ##
-    ampl_weights = np.array([1e-2])
+    ## Step 1
+    ampl_weights = np.logspace(1.0, -3.0, 10)
+
+
+
+    ## Step 2
+    ## B C D
+#    ampl_weights = np.logspace(-0.7 , -1.2 , 10)
+    ## E
+#    ampl_weights = np.logspace(-1.2, -1.6, 10)
+
+
+
+    ## Step 3
+    ## B C D
+#    ampl_weights = np.logspace(-0.97, -1.09, 10)
+    ## E
+#    ampl_weights = np.logspace(-1.47, -1.51, 10)
+
+
+
+    ## Step 4
+    ## B C D
+#    ampl_weights = np.logspace(-0.99, -1.01, 15)
+    ## E
+#    ampl_weights = np.logspace(-1.497, -1.501, 5)
+
+
+
+
+
+
+#    ampl_weights = np.array([1e-2])
+    
+    
 
 
 
 for i in range(0, len(ampl_weights)):
     ampl = amplitudes*ampl_weights[i]
-    main(direct, fdary, n, re, kx, kz, c, ampl, i)
+    main(direct, fdary, n, re, kx, kz, c, ampl, i, d)
 
 
 #main(direct, fdary, n, re, kx, kz, c, amplitudes, 0)
 
 print('   ', datetime.now() - startTimeLarge, '\n')
+
+
+
+
