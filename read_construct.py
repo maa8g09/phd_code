@@ -106,8 +106,8 @@ def check_files(direc):
     # the files DO NOT exist.
     a = 'geo'
     b = 'asc'
-    c = 'spec.ge'
-    d = 'spec.as'
+    c = 'python_spec.ge'
+    d = 'python_spec.as'
     
     files = [fi for fi in os.listdir(direc) if os.path.isfile(os.path.join(direc,fi))]
 
@@ -304,6 +304,27 @@ def read_construct_geometry(direc, dict_files):
                 
             if values[1] == '%Nd':
                 spec_geo['Nd'] = int(values[0])
+            
+            if values[1] == '%Nx':
+                spec_geo['Nx'] = int(values[0])
+    
+            if values[1] == '%Ny':
+                spec_geo['Ny'] = int(values[0])
+    
+            if values[1] == '%Nz':
+                spec_geo['Nz'] = int(values[0])
+            
+            if values[1] == '%Lx':
+                spec_geo['Lx'] = float(values[0])
+    
+            if values[1] == '%Lz':
+                spec_geo['Lz'] = float(values[0])
+                
+            if values[1] == '%alpha=2pi/Lx':
+                spec_geo['alpha'] = float(values[0])
+    
+            if values[1] == '%gamma=2pi/Lz':
+                spec_geo['gamma'] = float(values[0])
     
         ut.message('Closing spectral geometry file')
         f.close()

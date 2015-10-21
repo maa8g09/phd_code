@@ -17,6 +17,8 @@ Author details:
 import os
 import sys
 import math
+import numpy as np
+from scipy.interpolate import interp1d
 
 def printStart():
     print('##################################################################')
@@ -276,7 +278,7 @@ def makeSolutionDirectory(data, directory, n, re, kx, kz, c, amplitudes, i):
         
     fileName = '/details.txt'
     file = open(directory + fileName, "w")
-    file.write('n'+ "\n")
+    file.write('n (Ny - 2)'+ "\n")
     file.write(str(n)+ "\n"+ "\n")
     file.write('Re'+ "\n")
     file.write(str(re)+ "\n"+ "\n")
@@ -431,3 +433,107 @@ def writeSpectralGEOMfile(data, directory):
     file.close()
     
     return 0
+
+
+
+def makeOutputDictionary(generated_ff, geom, y_cheb, uniform, string_kx, string_kz, string_c, string_A):
+    
+    outputDic = {}
+    
+    U = np.zeros((geom['Nd'], geom['Nx'], 3*geom['m'], geom['Nz']))
+    
+    U_u = generated_ff.real[:,           0:geom['m']  , :]
+    U_v = generated_ff.real[:,   geom['m']:2*geom['m'], :]
+    U_w = generated_ff.real[:, 2*geom['m']:3*geom['m'], :]
+    
+    for i in range(0, geom['Nd']):
+        for nx in range(0, geom['Nx']):
+            for ny in range(0, geom['m']):
+                for nz in range(0, geom['Nz']):
+                    if i == 0: # u direction
+                        U[i, nx, ny, nz] = U_u[nx, ny, nz]
+                    elif i == 1: # v direction
+                        U[i, nx, ny, nz] = U_v[nx, ny, nz]
+                    elif i == 2: # w direction
+                        U[i, nx, ny, nz] = U_w[nx, ny, nz]
+
+    
+#    L2Norm = np.linalg.norm(U)
+#    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
+#    magn = 10.0
+#    U *= magn / L2Norm
+    
+    
+    # Interpolation to go from y_cheb toy_uniform
+    Ny = geom['m']
+    y_uniform = np.linspace(1.0, -1.0, Ny*1.0)
+    y_cheb = np.asarray(y_cheb)
+    y_cheb = np.squeeze(y_cheb)
+    
+    
+    U_u_uniform = np.zeros((geom['Nx'], geom['m'], geom['Nz']))
+    U_v_uniform = np.zeros((geom['Nx'], geom['m'], geom['Nz']))
+    U_w_uniform = np.zeros((geom['Nx'], geom['m'], geom['Nz']))
+    
+    for nx in range(0, geom['Nx']):
+        for nz in range(0, geom['Nz']):
+            uprofile = U_u[nx, :, nz] # 1-d vector
+            # fill value is the no-slip boundary condition
+            fu = interp1d(y_cheb, uprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fu = fu(y_uniform)
+            U_u_uniform[nx, :, nz] = fu
+            
+            
+            vprofile=U_v[nx, :, nz] # 1-d vector
+            fv = interp1d(y_cheb, vprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fv = fv(y_uniform)
+            U_v_uniform[nx, :, nz] = fv
+            
+            wprofile=U_w[nx, :, nz] # 1-d vector
+            fw = interp1d(y_cheb, wprofile, bounds_error=False, fill_value=0.0, kind='cubic') 
+            fw = fw(y_uniform)
+            U_w_uniform[nx, :, nz] = fw
+
+
+#    plt.plot(y_cheb, uprofile, 'r-', y_uniform, fu, 'g--')
+#    plt.legend(['data', 'cubic'], loc='best')
+#    plt.grid(True)
+#    plt.show()
+    
+
+    outputDic['resolvent_flowField'] = U
+    
+
+    if uniform:
+        outputDic['U'] = U_u_uniform
+        outputDic['V'] = U_v_uniform
+        outputDic['W'] = U_w_uniform
+        
+        outputDic['Y'] = y_uniform
+    
+    else:
+        outputDic['U'] = U_u
+        outputDic['V'] = U_v
+        outputDic['W'] = U_w
+        
+        outputDic['Y'] = y_cheb
+        
+    
+    outputDic['X'] = geom['x']
+    outputDic['Z'] = geom['z']
+
+    outputDic['Nx'] = geom['Nx']
+    outputDic['Ny'] = geom['m']
+    outputDic['Nz'] = geom['Nz']
+    outputDic['Nd'] = geom['Nd']
+
+    outputDic['Lx'] = geom['Lx']
+    outputDic['Lz'] = geom['Lz']
+    
+    outputDic['kx'] = string_kx
+    outputDic['kz'] = string_kz
+    outputDic['c'] = string_c
+    outputDic['A'] = string_A
+    
+    
+    return outputDic
