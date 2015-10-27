@@ -178,10 +178,11 @@ def plot2D_modes(flowField, four_d_array, three_d):
     
         axis_x, axis_y = np.meshgrid(axis_x, axis_y)
         origin = 'lower'
+        plt.figure()
         CS = plt.contourf(axis_x, 
                           axis_y, 
                           data_to_plot, 
-                          101, # levels
+                          301, # levels
                           # [-1, -0.1, 0, 0.1], #alpha=0.5,
                           cmap=cm.seismic,
                           origin=origin)
@@ -210,6 +211,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
 
     plt.show()
     
+    
     return
     
     
@@ -227,6 +229,12 @@ def plot2D(data_slice):
     utils.printSectionHeader()
     utils.printSectionTitle('Plotting a 2D plane')
 
+
+
+    v = np.linspace(0.0, 1.0, 301, endpoint=True)
+
+
+
     x = data_slice['axis_0']
     y = data_slice['axis_1']
 
@@ -242,8 +250,8 @@ def plot2D(data_slice):
     CS = plt.contourf(x, 
                       y, 
                       data_slice['contourData'], 
+                      #v, 
                       100, # levels
-                      # [-1, -0.1, 0, 0.1], #alpha=0.5,
                       cmap=cm.seismic
                       )
 

@@ -106,8 +106,8 @@ def check_files(direc):
     # the files DO NOT exist.
     a = 'geo'
     b = 'asc'
-    c = 'python_spec.ge'
-    d = 'python_spec.as'
+    c = '_spec.ge'
+    d = '_spec.as'
     
     files = [fi for fi in os.listdir(direc) if os.path.isfile(os.path.join(direc,fi))]
 

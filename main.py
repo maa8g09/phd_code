@@ -29,7 +29,7 @@ import os
 import subprocess as sb
 from datetime import datetime
 
-def main(directory, fourdarray, geom, Re, kx, kz, c, A, i, output_directory):
+def main(directory, fourdarray, geom, Re, kx, kz, c, A, i, output_directory, approximate_soln, outputPhysicalASC, outputSpectralASC, plotting):
     """
     INPUTS:
      directory:  directory where the flow solution is kept (downloaded from 
@@ -58,11 +58,6 @@ def main(directory, fourdarray, geom, Re, kx, kz, c, A, i, output_directory):
     
 
     data = {}
-    approximate_soln  = True
-    outputPhysicalASC = False
-    outputSpectralASC = False
-    plotting          = True
-    
     
     if directory == '':
         #===========================================================================================

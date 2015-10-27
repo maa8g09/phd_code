@@ -62,10 +62,11 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
                  formulation.
     
     """
-       
+    Mx = geom['Mx']
+    Mz = geom['Mz']
     
     generated_ff = np.zeros((len(geom['x']), 3*geom['m'], len(geom['z'])), dtype=np.complex128)     # Complex array
-    sing_vals = np.zeros((len(kx), len(geom['Mx']),len(geom['Mz'])))
+    sing_vals = np.zeros((len(kx), len(Mx),len(Mz)))
     
     
     # Loop through wavenumber triplets
@@ -76,8 +77,8 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
         
         # The stationary wave modes being used to calculate spectral flow field
         # These are also known as the harmonics
-        streamwise_stationary_modes = fund_alpha * geom['Mx']
-        spanwise_stationary_modes   = fund_beta * geom['Mz']
+        streamwise_stationary_modes = fund_alpha * Mx
+        spanwise_stationary_modes   = fund_beta * Mz
         
         if index == 0:
             string_kx = str(fund_alpha)
@@ -103,12 +104,12 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
                     
                     # mx = Mx[ia]
                     # same for Mz
-                    text02='(mx)kx: ('+str(geom['Mx'][ia])+') '+ str(alpha)+'    (mz)kz: ('+str(geom['Mz'][ib])+') '+ str(beta)
+                    text02='(mx)kx: ('+str(Mx[ia])+') '+ str(alpha)+'    (mz)kz: ('+str(Mz[ib])+') '+ str(beta)
                     print(Fore.BLUE + text02 + Style.RESET_ALL)
                     
                     omega = alpha * c
                     
-                    laminar_mean_flow = True # else couette
+                    laminar_mean_flow = True # True: channel, False: couette
                     C, C_adj, A, clencurt_quadrature, y_cheb, D1 = get_state_vectors(geom['Ny'], Re, geom['Lx'], geom['Lz'], alpha, beta, c, laminar_mean_flow)
                     
                     
@@ -123,7 +124,7 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
                     
                     
                     #===========================================================
-                    sing_vals[index, geom['Mx'][ia], geom['Mz'][ib]] = singular_values[0] # Storing the leading value
+                    sing_vals[index, Mx[ia], Mz[ib]] = singular_values[0] # Storing the leading value
                     # Ideally one would have a percentage checker to only 
                     # hold onto the singular values which are within 5/10/15%
                     # of the highest singular value
