@@ -28,6 +28,7 @@ from numpy.linalg import inv
 from numpy.linalg import solve
 from numpy.linalg import pinv
 from numpy.linalg import svd
+from scipy.interpolate import interp1d
 
 
 import matplotlib.pyplot as plt
@@ -156,11 +157,9 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
 
 
 
-def resolvent_approximation(data, rank):
+def resolvent_approximation(data, c, Re, rank):
 
-    c = 0.0
     string_c = format(c, '.4f')
-    Re = 400
 
     gen_ff = {}
     
@@ -207,40 +206,18 @@ def resolvent_approximation(data, rank):
         alpha = data['geometry']['physical']['alpha']
         beta  = data['geometry']['physical']['gamma']
         
-        # Fourier transform the channelflow solution
-#        u_hat = fft_flowField(data)
-    
-        
-#    u_hat_total = np.zeros((Nx, 3*Ny, Nz), dtype=np.complex128) # Looking at the complex conjugate of the coefficients
-#    
-#    for nx in range(0, Nx):
-#        plane = u_hat[nx, :, :]
-#        plane = plane[:, 1:-1]
-#        plane = np.conj(np.fliplr(plane))
-#        untoched_plane = u_hat[nx, :, :]
-#        total_plane = np.hstack((plane, untoched_plane))
-#        
-#        u_hat_total[nx, :, :] = total_plane
-        
-        
-        
-    # Now we know the fundamental wavenumbers and the geometrical
-    # dimensions of the physical domain we are studying.
-    
-    # Let us proceed to generate modes with these details and then
-    # project the modes onto the spectral velocity field
-    # in order to get values for the amplitude coefficients.
+
     
     
     # Stationary nodes along each axis
     # X axis
+    # Mx = np.arange(-1.0, 2.0) # 1 harmonic
     Mx = np.arange((-Nx/2.0)+1, (Nx/2.0)+1)
-#    Mx = np.arange(-1.0, 2.0) # 1 harmonic
     
     # Z axis
-#    Mz = np.arange((-Nz/2.0)+1, (Nz/2.0)+1) # only if youre looking at the whole spectral field.
+    # Mz = np.arange(2.0) # 1 harmonic
+    # Mz = np.arange((-Nz/2.0)+1, (Nz/2.0)+1) # only if youre looking at the whole spectral field.
     Mz = np.arange(0, (Nz/2.0 + 1))
-#    Mz = np.arange(2.0) # 1 harmonic
     
     kx = Mx * fund_alpha      # list of wavenumbers to use (modes multiplied by fundamental alpha)
     kz = Mz * fund_beta       # list of wavenumbers to use (modes multiplied by fundamental beta)
@@ -248,7 +225,7 @@ def resolvent_approximation(data, rank):
     
     
     
-    my_u_hat  = np.zeros((len(kx),    3*Ny, len(kz)), dtype=np.complex128)
+    u_hat_approx  = np.zeros((len(kx),    3*Ny, len(kz)), dtype=np.complex128)
     sing_vals = np.zeros((      1, len(kx), len(kz)))
 
 
@@ -263,7 +240,7 @@ def resolvent_approximation(data, rank):
             print(Fore.BLUE + text02 + Style.RESET_ALL)
             
             
-            my_u_hat[ikx, :, ikz] = u_hat[ikx, :, ikz]
+            u_hat_approx[ikx, :, ikz] = u_hat[ikx, :, ikz]
             
             if alpha == 0 or beta == 0:
                 continue
@@ -271,7 +248,7 @@ def resolvent_approximation(data, rank):
             
             omega=c*alpha
             
-            C, C_adj, A, w, y_cheb, D1 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c, False)
+            C, C_adj, A, clencurt_quadrature, y_cheb, D1 = get_state_vectors(N, Re, Lx, Lz, alpha, beta, c, False)
             
             # Now make the resolvent.
             I = np.eye(A.shape[0])
@@ -279,69 +256,46 @@ def resolvent_approximation(data, rank):
             Linv = inv(L)
             ResolventA = -1.0* Linv                 # resolvent
             H = C*ResolventA*C_adj                  # transfer function
-            U_spectral, S, V_spectral = svd(H)      # SVD
+            psi, sigma, phi_star = svd(H)           # SVD
             
+            tests.SVDNorm(psi, sigma, phi_star, H)
             
             #===========================================================
-            sing_vals[0, Mx[ikx], Mz[ikz]] = S[0]
+            sing_vals[0, Mx[ikx], Mz[ikz]] = sigma[0]
             # ideally one would have a percentage checker to only 
             # hold onto the singular values which are within 5/10/15%
             # of the highest singular value
             #===========================================================
             
-            if np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H) >= 1e-10:
-                nrm = str(np.linalg.norm(np.dot( np.dot(U_spectral, np.diag(S)), V_spectral) - H))
-                err = 'Something went wrong with the SVD, norm is ' + nrm
-                ut.error(err)
-            
-            
-            resolvent_modes = solve(clencurt_quadrature.T, U_spectral)
-#            resolvent_modes = U_spectral
-            
-            divergence = 1.0j*alpha*resolvent_modes[0:m, 1] + np.dot(D1, resolvent_modes[m:2*m, 1]) + 1.0j*beta*resolvent_modes[2*m:3*m, 1]
-            div_norm = np.linalg.norm(divergence)
-            
-            if div_norm >= 1e-10:
-                err = 'Something went wrong with the divergence criteria, norm is ' + str(div_norm)
-                ut.error(err)
+            resolvent_modes = solve(clencurt_quadrature.T, psi) # unweighted resolvent modes
+            # Divergence test
+            tests.divergence(resolvent_modes, alpha, beta, m, D1)
+            # Orthogonality test
+            tests.orthogonality(psi)
         
-            
-            
-            # We know u_tilde
-            u_tilde = u_hat[ikx, :, ikz]               # Vector of size (3*Ny, 1)     [ (row, col) ]
             
             
             
             rank = min(rank, 3*m)
+            
             # chi  = sigma * eta
-            chi = get_scalars(u_tilde, U_spectral, clencurt_quadrature, m, rank)            
-            
-            
-            # Depending on the rank we can see what the fluctuations will look 
-            # like
+            chi = get_scalars(u_hat[ikx, :, ikz], psi, clencurt_quadrature, m, rank)
             chi = np.asarray(chi)
             chi = np.asmatrix(chi)
-#            chi_real = chi.real
-#            chi_imag = chi.imag
+
             
             
             # eta 
-            sigma = S[:rank]
+            sigma = sigma[:rank]
             sigma = np.asmatrix(np.diag(sigma))
-#            eta = solve(sigma, chi)
-#            eta_real = eta.real
-#            eta_imag = eta.imag
+            
+            u_tilde_approx = psi[:,:rank] * chi         
             
             
-            
-            # orthogonality test
-            result = U_spectral * U_spectral.H
-            u_tilde_approx = U_spectral[: , :rank] * chi         
-            
-            
-            result = np.asmatrix(u_tilde).T - u_tilde_approx
+            result = np.asmatrix(u_hat[ikx, :, ikz]).T - u_tilde_approx
             result = np.linalg.norm(result)
             text03='The norm is: '+str(result)
+            
             if result <= 1e-10:
                 print(Back.GREEN + text03 + Style.RESET_ALL)
             elif result >= 1e-10 and result <= 1e-5:
@@ -350,9 +304,7 @@ def resolvent_approximation(data, rank):
                 print(Back.RED + text03 + Style.RESET_ALL)
                 
             
-            
-            
-            my_u_hat[ikx, :, ikz] = np.squeeze(np.asarray(u_tilde_approx))
+            u_hat_approx[ikx, :, ikz] = np.squeeze(np.asarray(u_tilde_approx))
 
             
             
@@ -361,29 +313,15 @@ def resolvent_approximation(data, rank):
     
     # Difference between My Fourier flow field
     # compared to the Gibson flow field.
-    diff = np.abs(u_hat - my_u_hat)
+    diff = np.abs(u_hat - u_hat_approx)
     diff = np.linalg.norm(diff)
     text04='The total flow field norm is: '+str(diff)
     print('\n',Fore.WHITE + Back.MAGENTA + text04 + Style.RESET_ALL,'\n')
 
 
-
-            
-            
-            
-            
-            
-            
-    # Output the flow field as an ASCII file for channelflow to read in.
-    
-    # Here I need ot construct my geometry file and pack the dictionary such that
-    # when it's opened in utils, the writing is as easy as channelflow writing 
-    # to file.
-    # I store the 4D matrix as follows:
-    # u[i, nx, ny, nz]
-    # so:
     U = np.zeros((Nd, Nx, Ny, Nz))
     generated_ff = np.zeros((Nx, 3*m, Nz))
+    
     U_u = generated_ff[:,   0:m  , :]
     U_v = generated_ff[:,   m:2*m, :]
     U_w = generated_ff[:, 2*m:3*m, :]
@@ -403,17 +341,7 @@ def resolvent_approximation(data, rank):
     
     
     L2Norm = np.linalg.norm(U)
-#    print(np.allclose(L2Norm, np.sqrt(np.sum(np.square(U[:,:,:,:])))))
 
-
-
-
-#    magn = 10.0
-#    U *= magn / L2Norm
-    
-
-    
-    
     
     # Interpolation to go from y_cheb toy_uniform
     Ny = m
@@ -486,9 +414,9 @@ def resolvent_approximation(data, rank):
     
     
     U_hat = np.zeros((Nd, Nx, Ny, Nz), dtype=np.complex128)
-    U_hat_u = my_u_hat[:,   0:m  , :]
-    U_hat_v = my_u_hat[:,   m:2*m, :]
-    U_hat_w = my_u_hat[:, 2*m:3*m, :]
+    U_hat_u = u_hat_approx[:,   0:m  , :]
+    U_hat_v = u_hat_approx[:,   m:2*m, :]
+    U_hat_w = u_hat_approx[:, 2*m:3*m, :]
     for i in range(0, Nd):
         for mx in range(0, len(Mx)):
             for ny in range(0, Ny):

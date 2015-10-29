@@ -537,3 +537,4 @@ def makeOutputDictionary(generated_ff, geom, y_cheb, uniform, string_kx, string_
     
     
     return outputDic
+    

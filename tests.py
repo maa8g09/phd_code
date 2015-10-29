@@ -22,3 +22,14 @@ def divergence(resolvent_modes, alpha, beta, m, D1):
         ut.error(err)
     
     return 0
+    
+def orthogonality(A):
+    B = A * A.H
+    I = np.eye(B.shape[0])
+    C = B.real - I
+    C_norm = np.linalg.norm(C)
+    if C_norm >= 1e-10:
+        err = 'Resolvent modes are not orthogonal, norm is ' + str(C_norm)
+        ut.error(err)
+    
+    

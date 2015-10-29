@@ -120,13 +120,14 @@ def main(directory, fourdarray, geom, Re, kx, kz, c, A, i, output_directory, app
         if data['flowField']['is_physical'] == True:
             up.plot2D(data['velslice'])
 
+
         #===========================================================================================
         # Resolvent Formulation
         if approximate_soln:
     
             rank = 90
             
-            aprxmtd_flowField = rf.resolvent_approximation(data, rank)
+            aprxmtd_flowField = rf.resolvent_approximation(data, c, Re, rank)
             
             
             #=======================================================================================

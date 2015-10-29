@@ -9,21 +9,22 @@ print(pwd)
 startTimeLarge = datetime.now()
 
 approximate_soln  = False
-outputPhysicalASC = True
+outputPhysicalASC = False
 outputSpectralASC = False
-plotting          = False
+plotting          = True
 
 ####################################################################################################
 #### INPUT PARAMETERS - Using existing flow field
 ####################################################################################################
 mac = False
-linux = False
+linux = True
 
 if mac:
     direct = '/Users/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
 elif linux:
-    direct='/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-nothing/wavepacket_000_4modes_(-0.45+0j)/data-skew-finer-saves/u0.030'
+    direct='/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25/wavepacket_017_4modes_(-0.0118649290443+0j)/data-skew/u200.00'
     ampl_weights = np.array([1.0])
+    step = ''
 else:
     direct = ''
     ampl_weights = np.logspace(1.0, -3.0, 20)
@@ -59,7 +60,7 @@ alabel = wavepacket+'_a'
 a = wp.wavepackets[alabel]
 
 # Plotting information for a slice___________________________________
-fdary = [0, 'all', 'all', 0] # XY 
+fdary = [0 , 'all', 'all', 17] # XY 
 #fdary = [0, 0, 'all', 'all'] # YZ
 
 # Output directory___________________________________________________
@@ -86,7 +87,7 @@ geom['z'] = np.linspace(-geom['Lz']/2.0, geom['Lz']/2.0, geom['Nz'])
 
 # run-time___________________________________________________________
 geom['t'] = 0            
-# number of modes____________________________________________________  
+# number of modes____________________________________________________
 geom['m'] = geom['Ny'] - 2  
     
 ####################################################################################################

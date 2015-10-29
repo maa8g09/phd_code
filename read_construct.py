@@ -498,6 +498,64 @@ def get_data_slice(ff, four_d_array, var_geo):
     U_mag = np.sqrt(U_mag)
     
     
+
+    
+    
+    
+    
+    Nx = var_geo['Nx']
+    Ny = var_geo['Ny']
+    Nz = var_geo['Nz']
+    y = var_geo['y']
+    
+    
+    laminarBaseFlow = []
+    for iy in range(0, len(y)):
+        laminarBaseFlow.append(1.0 - y[iy]*y[iy])
+    laminarBaseFlow = np.asarray(laminarBaseFlow
+    
+    )
+    mean = np.zeros((3, Nx, Ny, Nz))
+    flucs = np.zeros((3, Nx, Ny, Nz))
+    
+    
+    for nx in range(0, Nx):
+        for nz in range(0, Nz):
+                mean[0, nx, :, nz] = laminarBaseFlow
+    
+        
+    ff_u = ff[0, :, :, :]
+    ff_v = ff[1, :, :, :]
+    ff_w = ff[2, :, :, :]
+    
+    mean_u = mean[0, :, :, :]
+    mean_v = mean[1, :, :, :]
+    mean_w = mean[2, :, :, :]
+    
+    flucs_u = flucs[0, :, :, :]
+    flucs_v = flucs[1, :, :, :]
+    flucs_w = flucs[2, :, :, :]
+    
+    
+    flucs_u = ff_u - mean_u
+    flucs_v = ff_v - mean_v
+    flucs_w = ff_w - mean_w
+    
+    
+    # Fluctuations only
+    ff[0, :, :, :] = flucs_u
+    ff[1, :, :, :] = flucs_v
+    ff[2, :, :, :] = flucs_w
+    
+    
+#    # Mean only
+#    ff[0, :, :, :] = mean_u
+#    ff[1, :, :, :] = mean_v
+#    ff[2, :, :, :] = mean_w
+    
+    
+    
+    
     vel = 0
     if four_d_array[0] == 0:
         vel = ff[0,:,:,:]

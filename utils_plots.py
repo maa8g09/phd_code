@@ -231,7 +231,6 @@ def plot2D(data_slice):
 
 
 
-    v = np.linspace(0.0, 1.0, 301, endpoint=True)
 
 
 
@@ -247,11 +246,13 @@ def plot2D(data_slice):
     plt.subplots(1,1)
 
 
+    v = np.linspace(0.0, 1.0, 21, endpoint=True)
+    
     CS = plt.contourf(x, 
                       y, 
                       data_slice['contourData'], 
                       #v, 
-                      100, # levels
+                      301, # levels
                       cmap=cm.seismic
                       )
 
@@ -265,7 +266,8 @@ def plot2D(data_slice):
     # Plot text
     plt.xlabel(data_slice['axis_0_title'])
     plt.ylabel(data_slice['axis_1_title'])
-    plt.title(data_slice['plotTitle'])
+    title = ' (fluctuations)'
+    plt.title(data_slice['plotTitle'] + title)
     # the first two value are the x-axis limits 
     # and then the next two values are the y-axis limits
 #    plt.axis([0, data_slice['max_0']-1, 0, data_slice['max_1']-1])

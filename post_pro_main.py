@@ -38,7 +38,9 @@ Just set main.py to output nothing and only plot the flow field.
 # A CRUDE VERSION (NEEDS TO BE TIDIED):
 
 # Convergence plot
-main_direc = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25/wavepacket_0
+main_direc = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25/'
+amp = 'wavepacket_018_4modes_(-0.00730699532635+0j)'
+main_direc = main_direc + amp
 dns_output = 'data_skew.txt'
 
 
@@ -78,13 +80,16 @@ for i, line in enumerate(f):
     else:
         
         if values[0] == 't':
-            var['t'].append(float(values[2]))
+            if values[2] != '-nan' or values[2] != 'nan':
+                var['t'].append(float(values[2]))
 
         elif values[0] == 'L2Norm(u)':
-            var['L2Norm(u)'].append(float(values[2]))
+            if values[2] != '-nan' or values[2] != 'nan':
+                var['L2Norm(u)'].append(float(values[2]))
     
         elif values[0] == 'dissip(u+U)':
-            var['dissip(u+U)'].append(float(values[2]))
+            if values[2] != '-nan' or values[2] != 'nan':
+                var['dissip(u+U)'].append(float(values[2]))
 
 
 ut.message('Closing file')
