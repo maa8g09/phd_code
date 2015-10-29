@@ -32,6 +32,32 @@ change directory to each folder and in each folder:
 Make an automated input file, and keep the manual input separate. This way, the post-pro remains entirely blackboxed.
 
 Just set main.py to output nothing and only plot the flow field. 
+
+
+
+
+
+Questions:
+
+What slice do you want the movies for? it's not steady state, so you either go through 
+and output all images at each XY plane at each time step?
+
+
+I think you should specify a slice you wanna look at (a la 4D array in main)
+
+then look at that slice for however many time units you want to see. 
+
+Put each 4D slice in its own folder.
+
+
+
+
+
+
+
+
+
+
 '''
 
 
