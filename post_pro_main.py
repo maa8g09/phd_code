@@ -169,7 +169,7 @@ for i in range(0, len(directories)):
                     plt.ylabel(key)
                     plt.legend(legnd, loc='best')
                     
-                    plt.savefig(main_direc + 'convergence_'+key +'.png')   # save the figure to file
+                    plt.savefig(main_direc + 'convergence_' + key + '.png')   # save the figure to file
         
             
     
@@ -188,11 +188,31 @@ for i in range(0, len(directories)):
             #if directory doesn't exist:
             if not os.path.exists(ff_dir):
                 os.mkdir(ff_dir)
-                ascOutput = folderName+'/'folderName
-                sp.call(['field2ascii', '-p', k, ascOutput])
+                ascOutput = folderName+'/'+folderName
+                sp.call(['field2ascii', '-p', k, ascOutput]) # channelflow command line arguments
             
-        
+                
+                subsubdir = os.chdir(ff_dir)
+                
+                plotSlice(inputDir, outputDir)
+                
+                # Now take the asc files and plot slice. 
+                
+                # NOTE: change field2ascii to only output the physical information, there's no need for the spectral 
+                # information.
+                
+                # isolate the looping through directories and executing commands.
             
+
+
+
+
+
+
+
+
+
+
 
 
 
