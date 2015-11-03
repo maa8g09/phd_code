@@ -1,11 +1,16 @@
+#!/usr/bin/env python
+
+
 import numpy as np
 import main as m
 import wavepackets as wp
 from datetime import datetime
 import time
 import os
+
 pwd=os.getcwd()
 print(pwd)
+
 startTimeLarge = datetime.now()
 
 approximate_soln  = False
@@ -17,7 +22,7 @@ plotting          = True
 #### INPUT PARAMETERS - Using existing flow field
 ####################################################################################################
 mac = False
-linux = True
+linux = False
 
 if mac:
     direct = '/Users/arslan/Documents/work/channelflow-related/database_solns/W03/equilibria/EQ1'
@@ -27,7 +32,7 @@ elif linux:
     step = ''
 else:
     direct = ''
-    ampl_weights = np.logspace(1.0, -3.0, 20)
+    ampl_weights = np.logspace(1.0, -3.0, 2)
 #    ampl_weights = np.array([1e-1])
     date = time.strftime("%Y_%m_%d")
     step = '-DNS-' + str(date)
@@ -89,7 +94,12 @@ geom['z'] = np.linspace(-geom['Lz']/2.0, geom['Lz']/2.0, geom['Nz'])
 geom['t'] = 0            
 # number of modes____________________________________________________
 geom['m'] = geom['Ny'] - 2  
-    
+
+####################################################################################################
+#### Computation type
+####################################################################################################
+DNS = True
+
 ####################################################################################################
 #### MAIN ROUTINE
 ####################################################################################################
@@ -97,4 +107,32 @@ for i in range(0, len(ampl_weights)):
     ampl = a*ampl_weights[i]
     m.main(direct, fdary, geom, Re, kx, kz, c, ampl, i, d, approximate_soln, outputPhysicalASC, outputSpectralASC, plotting)
 
+    
+    
+
 print('   ', datetime.now() - startTimeLarge, '\n')
+
+
+
+
+# Copy the bash script you already have
+
+
+
+#if DNS:
+#    # change into outputDirectory
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

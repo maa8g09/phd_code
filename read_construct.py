@@ -153,16 +153,16 @@ def check_files(direc):
     
     
     # We carry out the same check for the spectral files.    
-    if c is 'spec.ge' and d is 'spec.as':
+    if c is '_spec.ge' and d is '_spec.as':
         ut.message('MISSING: Spectral geometry and ASCII files are not in directory')
         
-    elif c is 'spec.ge' or d is 'spec.as':
+    elif c is '_spec.ge' or d is '_spec.as':
         # if not, then point out which one is missing...DONT RAISE ERRORS...yet
-        if c is 'spec.ge':
+        if c is '_spec.ge':
             ut.message('MISSING: Could not find spectral geometry file')
             missing_s_geo = '\nspectral geometry file'
             
-        if d is 'spec.as':
+        if d is '_spec.as':
             ut.message('MISSING: Could not find spectral ASCII file')
             missing_s_asc = '\nspectral ascii file'
             

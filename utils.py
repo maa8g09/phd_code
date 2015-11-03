@@ -20,34 +20,43 @@ import math
 import numpy as np
 from scipy.interpolate import interp1d
 
+
+verbose = False
+
+
+
 def printStart():
-    print('##################################################################')
-    print('_________ .__                                .__            ')
-    print('\_   ___ \|  |__ _____    ____   ____   ____ |  |           ')
-    print('/    \  \/|  |  \\__   \  /    \ /    \_/ __ \|  |           ')
-    print('\     \___|   Y  \/ __ \|   |  \   |  \  ___/|  |__         ')
-    print(' \______  /___|  (____  /___|  /___|  /\___  >____/         ')
-    print('        \/     \/     \/     \/     \/     \/               ')
-    print('    __________                    .__                      __   ')
-    print('    \______   \ ____   __________ |  |___  __ ____   _____/  |_ ')
-    print('     |       _// __ \ /  ___/  _ \|  |\  \/ // __ \ /    \   __\.')
-    print('     |    |   \  ___/ \___ (  <_> )  |_\   /\  ___/|   |  \  |  ')
-    print('     |____|_  /\___  >____  >____/|____/\_/  \___  >___|  /__|  ')
-    print('            \/     \/     \/                     \/     \/      ')
-    print('Muhammad Arslan Ahmed')
-    print('University of Southampton')
-    print('##################################################################')
+    
+    if verbose:
+        print('##################################################################')
+        print('_________ .__                                .__            ')
+        print('\_   ___ \|  |__ _____    ____   ____   ____ |  |           ')
+        print('/    \  \/|  |  \\__   \  /    \ /    \_/ __ \|  |           ')
+        print('\     \___|   Y  \/ __ \|   |  \   |  \  ___/|  |__         ')
+        print(' \______  /___|  (____  /___|  /___|  /\___  >____/         ')
+        print('        \/     \/     \/     \/     \/     \/               ')
+        print('    __________                    .__                      __   ')
+        print('    \______   \ ____   __________ |  |___  __ ____   _____/  |_ ')
+        print('     |       _// __ \ /  ___/  _ \|  |\  \/ // __ \ /    \   __\.')
+        print('     |    |   \  ___/ \___ (  <_> )  |_\   /\  ___/|   |  \  |  ')
+        print('     |____|_  /\___  >____  >____/|____/\_/  \___  >___|  /__|  ')
+        print('            \/     \/     \/                     \/     \/      ')
+        print('Muhammad Arslan Ahmed')
+        print('University of Southampton')
+        print('##################################################################')
     return
 
 
 def printSectionHeader():
-    print('__________________________________________________________________\n')
+    if verbose:
+        print('__________________________________________________________________\n')
     return
 
 
 def printSectionTitle(str):
     # Print the section headers for each main section of the code output.
-    print(' **', str, '\n')
+    if verbose:
+        print(' **', str, '\n')
     return
 
 
@@ -86,7 +95,8 @@ def error(str):
     
     
 def message(str):
-    print('   ', str, '\n')
+    if verbose:
+        print('   ', str, '\n')
     return
 
 
@@ -99,7 +109,8 @@ def openFile(str):
     """
     
     f = open(str, 'r')
-    message('Opened the file: ' + str)
+    if verbose:
+        message('Opened the file: ' + str)
     return f
     
 
@@ -251,7 +262,7 @@ def writeGEOMfile(data, directory):
     
     
 def makeSolutionDirectory(data, directory, n, re, kx, kz, c, amplitudes, i):
-
+    i = i+1
     kxstr = data['kx']
     
     if kx.shape[0] > 1:

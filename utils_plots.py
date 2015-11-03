@@ -215,7 +215,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
     return
     
     
-def plot2D(data_slice):
+def plot2D(data_slice, outputDir, fileName):
 #            
 #    data_slice = {'contourData': contour_data,
 #                  'axis_0': a0,
@@ -242,17 +242,17 @@ def plot2D(data_slice):
     
     
     x, y = np.meshgrid(x, y)
+    fig = plt.figure()
+#    plt.subplots(1,1)
 
-    plt.subplots(1,1)
 
-
-    v = np.linspace(0.0, 1.0, 21, endpoint=True)
+    v = np.linspace(0, 1.0, 100, endpoint=True)
     
     CS = plt.contourf(x, 
                       y, 
                       data_slice['contourData'], 
-                      #v, 
-                      301, # levels
+                      v, 
+#                      301, # levels
                       cmap=cm.seismic
                       )
 
@@ -281,7 +281,9 @@ def plot2D(data_slice):
     plt.grid(True)
     plt.xticks(xticks)#, fontsize = 15)
     plt.yticks(yticks)#, fontsize = 15)
-    plt.show()
+#    plt.show()
+    plt.savefig(outputDir + '/' + fileName + '.png')
+    plt.close(fig)
     
     return
 
