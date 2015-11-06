@@ -542,13 +542,13 @@ def get_data_slice(ff, four_d_array, var_geo):
     flucs_w = ff_w - mean_w
     
     
-    # Fluctuations only
-    ff[0, :, :, :] = flucs_u
-    ff[1, :, :, :] = flucs_v
-    ff[2, :, :, :] = flucs_w
+#    # Fluctuations only
+#    ff[0, :, :, :] = flucs_u
+#    ff[1, :, :, :] = flucs_v
+#    ff[2, :, :, :] = flucs_w
     
     
-#    # Mean only
+#    # Base flow only
 #    ff[0, :, :, :] = mean_u
 #    ff[1, :, :, :] = mean_v
 #    ff[2, :, :, :] = mean_w

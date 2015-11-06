@@ -215,7 +215,7 @@ def plot2D_modes(flowField, four_d_array, three_d):
     return
     
     
-def plot2D(data_slice, outputDir, fileName):
+def plot2D(data_slice, outputDir, fileName, iteration_time):
 #            
 #    data_slice = {'contourData': contour_data,
 #                  'axis_0': a0,
@@ -245,15 +245,17 @@ def plot2D(data_slice, outputDir, fileName):
     fig = plt.figure()
 #    plt.subplots(1,1)
 
+    vel_min = np.amin(data_slice['contourData'])
+    vel_max = np.amax(data_slice['contourData'])
 
-    v = np.linspace(0, 1.0, 100, endpoint=True)
+    v = np.linspace(vel_min, vel_max, 20, endpoint=True)
     
     CS = plt.contourf(x, 
                       y, 
                       data_slice['contourData'], 
                       v, 
 #                      301, # levels
-                      cmap=cm.seismic
+                      cmap=cm.jet
                       )
 
     plt.quiver(x,
@@ -266,7 +268,7 @@ def plot2D(data_slice, outputDir, fileName):
     # Plot text
     plt.xlabel(data_slice['axis_0_title'])
     plt.ylabel(data_slice['axis_1_title'])
-    title = ' (fluctuations)'
+    title = ' (fluctuations) at t = ' + iteration_time
     plt.title(data_slice['plotTitle'] + title)
     # the first two value are the x-axis limits 
     # and then the next two values are the y-axis limits
@@ -278,7 +280,7 @@ def plot2D(data_slice, outputDir, fileName):
     cbar.ax.set_ylabel(data_slice['cbar_t'])
         
     # Plot grid 
-    plt.grid(True)
+#    plt.grid(True)
     plt.xticks(xticks)#, fontsize = 15)
     plt.yticks(yticks)#, fontsize = 15)
 #    plt.show()

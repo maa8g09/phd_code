@@ -194,10 +194,10 @@ def writeASCIIfile(data, directory):
     
     """
 
-    kx = data['kx']
-    kz = data['kz']
-    c = data['c']
-    A = data['A']
+#    kx = data['kx']
+#    kz = data['kz']
+#    c = data['c']
+#    A = data['A']
     
     flowField = data['resolvent_flowField']
     
@@ -219,6 +219,28 @@ def writeASCIIfile(data, directory):
     print('Boom, the ASCII is done.')
     
     return 0
+
+
+def writeMeanASCIIfile(flowField, directory):
+    fileName = "/umean.asc"
+    
+    file = open(directory + fileName, "w")
+    
+    for nx in range(0, flowField.shape[1]):
+        for ny in range(0, flowField.shape[2]):
+            for nz in range(0, flowField.shape[3]):
+                for nd in range(0, flowField.shape[0]):
+                    tmp = flowField[nd, nx, ny, nz]
+                    tmp = format(tmp, '.16f')
+                    file.write(tmp + "\n")
+                    
+    
+    file.close()
+    
+    print('Boom, the Mean ASCII is done.')
+    
+    return 0
+    
     
     
     
