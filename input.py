@@ -14,9 +14,9 @@ print(pwd)
 startTimeLarge = datetime.now()
 
 approximate_soln  = False
-outputPhysicalASC = False
+outputPhysicalASC = True
 outputSpectralASC = False
-plotting          = True
+plotting          = False
 
 ####################################################################################################
 #### INPUT PARAMETERS - Using existing flow field
@@ -32,7 +32,8 @@ elif linux:
     step = ''
 else:
     direct = ''
-    ampl_weights = np.logspace(1.0, -3.0, 2)
+    ampl_weights = np.logspace(1.0, -3.0, 20)
+    ampl_weights = np.logspace(-0.26, -0.47, 5)
 #    ampl_weights = np.array([1e-1])
     date = time.strftime("%Y_%m_%d")
     step = '-DNS-' + str(date)

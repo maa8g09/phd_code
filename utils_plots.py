@@ -248,7 +248,7 @@ def plot2D(data_slice, outputDir, fileName, iteration_time):
     vel_min = np.amin(data_slice['contourData'])
     vel_max = np.amax(data_slice['contourData'])
 
-    v = np.linspace(vel_min, vel_max, 20, endpoint=True)
+    v = np.linspace(vel_min, vel_max, 10, endpoint=True)
     
     CS = plt.contourf(x, 
                       y, 

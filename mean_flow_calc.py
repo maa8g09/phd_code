@@ -38,9 +38,9 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 main_directory = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_007_4modes_(-1.51191822883+0j)'
 case_directory = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_007_4modes_(-1.51191822883+0j)/data-skew'
-t_start = 800.0
-t_end   = 900.0
-steps = 101
+t_start = 0.0
+t_end   = 999.0
+steps = 1000
 t_range = np.linspace(t_start, t_end, steps)
 
 
@@ -67,7 +67,6 @@ for k in files:
     if str(k) != 'couette.args' and str(k)[0] == 'u' and str(k) != 'umean.asc':
         k = str(k)
         folderName = k[1:-3]
-        
         bool_start_pt = isclose(t_start, float(folderName))
         bool_end_pt   = isclose(t_end,   float(folderName))
         bool_in_range = False
@@ -78,6 +77,7 @@ for k in files:
         if bool_in_range or bool_start_pt or bool_end_pt:
             
             if float(folderName) in t_range:
+                print(folderName)
                 
                 ff_dir = case_directory + '/' + folderName
                 
@@ -149,9 +149,10 @@ dict_fluc_velSlices = {}
 for key, value in dict_inst.items():
     ff = dict_fluc[key]
     
-    fluc_slice = rc.get_data_slice(ff, [0, 'all', 'all', 17], final_data['geometry']['physical'])
+    fluc_slice = rc.get_data_slice(ff, [0, 0, 'all', 'all'], final_data['geometry']['physical'])
     
     if os.path.exists(post_image_dir):
+        key = key.zfill(8)
         fileName = 'fluc_t_'+str(key)
         up.plot2D(fluc_slice, post_image_dir, fileName, str(key))
     
