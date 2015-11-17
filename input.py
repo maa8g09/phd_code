@@ -16,7 +16,7 @@ startTimeLarge = datetime.now()
 approximate_soln  = False
 outputPhysicalASC = True
 outputSpectralASC = False
-plotting          = False
+plotting          = True
 
 ####################################################################################################
 #### INPUT PARAMETERS - Using existing flow field
@@ -34,7 +34,7 @@ else:
     direct = ''
     ampl_weights = np.logspace(1.0, -3.0, 20)
     ampl_weights = np.logspace(-0.26, -0.47, 5)
-#    ampl_weights = np.array([1e-1])
+    ampl_weights = np.array([1e-1])
     date = time.strftime("%Y_%m_%d")
     step = '-DNS-' + str(date)
     
@@ -67,7 +67,7 @@ a = wp.wavepackets[alabel]
 
 # Plotting information for a slice___________________________________
 fdary = [0 , 'all', 'all', 17] # XY 
-#fdary = [0, 0, 'all', 'all'] # YZ
+fdary = [0, 0, 'all', 'all'] # YZ
 
 # Output directory___________________________________________________
 d = '/home/arslan/Documents/work/channelflow-related/set01/Re' + str(Re) + '/' + wavepacket + '/ampls' + step

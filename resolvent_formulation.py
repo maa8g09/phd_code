@@ -139,6 +139,9 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
                     # u_tilde = chi * Psi
                     u_tilde = amplitudes[index] * resolvent_modes[:, 0] # Rank 1
                     u_tilde = np.asmatrix(u_tilde)
+#                    u_tildeH = u_tilde.H
+#                    u_tildeH = u_tildeH.T
+#                    u_tilde = u_tilde + u_tildeH
                     
                     
                     # Inverse fourier transform
@@ -149,7 +152,7 @@ def resolvent_analysis(geom, Re, kx, kz, c, amplitudes, data, fourdarray):
         print('\n\n')
 
 
-    y_uniform=True
+    y_uniform=False
     
     outputDic = ut.makeOutputDictionary(generated_ff, geom, y_cheb, y_uniform, string_kx, string_kz, string_c, string_A)
 

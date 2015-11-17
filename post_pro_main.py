@@ -13,6 +13,13 @@ from time import time
 import sys
 
 
+
+
+convPlots = False
+makingMovie = True
+outputPlots = False
+convertDAT = True
+
 '''
 
 INPUTS:
@@ -80,11 +87,12 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 
 
-main_direc = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further'
+main_direc = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/'
 dns_output = 'data_skew.txt'
-t_start = 0.0
-t_end   = 15.0
-makingMovie = False
+t_start = 500.0
+t_end   = 550.0
+steps = 51
+t_range = np.linspace(t_start, t_end, steps)
 
 
 
@@ -100,238 +108,306 @@ legnd = []
 var = {}
 
 
+data_per_case = {}
+
+
 for i in range(0, len(directories)):
     startTimePerDir = datetime.now()
-    print('\n\n',directories[i], '\n')
-    os.chdir(main_direc + '/' + directories[i])   
-    pwd = os.getcwd() 
-    print(pwd)
-    files = [fi for fi in os.listdir(pwd) if os.path.isfile(os.path.join(pwd,fi))]
-    
-    tmp_dir = str(directories[i])
-    tmp = '_0'
-    tmp_i = tmp_dir.find(tmp)
-    tmp_dir = tmp_dir[tmp_i+1: tmp_i+4]
-    tmp_dir = str(int(tmp_dir)+1)
-    legnd.append('$\chi_{' + tmp_dir+'}$')
     
     
-    for j in files:
-        if str(j) == dns_output:
-            ut.printSectionHeader()
-            ut.printSectionTitle('Reading the DNS output file')
+    if directories[i] != 'further':
+        
+        print('\n\n',directories[i], '\n')
+        os.chdir(main_direc + '/' + directories[i])   
+        pwd = os.getcwd() 
+        print(pwd)
+        
+        
+        initialFF = rc.main_read_construct(pwd, [0,0,'all', 'all'], False)
+        
+        data_per_case = initialFF
+        
+        meanFile = ut.openFile(pwd + '/data-skew/umean.asc')
+        meanVec = np.zeros((initialFF['geometry']['physical']['Nd'],
+                            initialFF['geometry']['physical']['Nx'],
+                            initialFF['geometry']['physical']['Ny'],
+                            initialFF['geometry']['physical']['Nz']))
+        
+        for u, line in enumerate(meanFile):
+            values = line.split()
+            nx = int(values[0])
+            ny = int(values[1])
+            nz = int(values[2])
+            nd = int(values[3])
+            vel = float(values[4])
+            if vel <= 1e-8:
+                vel = 0.0
+            meanVec[nd, nx, ny, nz] = vel
+            
+        ut.message('Closing the physical ASCII file')
+        meanFile.close()
+        
+        
+        
+        
+        files = [fi for fi in os.listdir(pwd) if os.path.isfile(os.path.join(pwd,fi))]
+        
+        tmp_dir = str(directories[i])
+        tmp = '_0'
+        tmp_i = tmp_dir.find(tmp)
+        tmp_dir = tmp_dir[tmp_i+1: tmp_i+4]
+        tmp_dir = str(int(tmp_dir))
+        legnd.append('$\chi_{' + tmp_dir+'}$')
+        
+        
+        if convPlots:
+        
+            for j in files:
+                if str(j) == dns_output:
+                    ut.printSectionHeader()
+                    ut.printSectionTitle('Reading the DNS output file')
+                            
                     
-            
-            f = ut.openFile(pwd + '/' + dns_output)
-            
-            dict_per_case = {}
-            
-            
-            ut.message('Constructing dictionary')
-            
-            '''
-            Sample output, you can decide which variables you want ot plot from here.
-            
-                       t == 42.8
-               L2Norm(u) == 0.704647
-            chebyNorm(u) == 1.0705
-             dissip(u+U) == 2.59421
-              input(u+U) == 1.00164
-              divNorm(u) == 0.0407906
-                   Ubulk == 1.33333
-                   ubulk == 0.666667
-                    dPdx == -0.0040663
-              Ubulk*h/nu == 1600
-             Uparab*h/nu == 2400
-                     CFL == 0.0220104
-            '''
-            
-            dict_per_case['t'] = []
-            dict_per_case['L2Norm(u)'] = []
-            dict_per_case['dissip(u+U)'] = []
-            dict_per_case['CFL'] = []
-            
-            for k, line in enumerate(f):
-                values = line.split()
-                
-                if len(values) == 0:
-                    print('Empty line')
-                    print('')
+                    f = ut.openFile(pwd + '/' + dns_output)
                     
-                else:
+                    dict_per_case = {}
                     
-                    if values[0] == 't':
-                        if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
-                            dict_per_case['t'].append(float(values[2]))
+                    
+                    ut.message('Constructing dictionary')
+                    
+                    '''
+                    Sample output, you can decide which variables you want ot plot from here.
+                    
+                               t == 42.8
+                       L2Norm(u) == 0.704647
+                    chebyNorm(u) == 1.0705
+                     dissip(u+U) == 2.59421
+                      input(u+U) == 1.00164
+                      divNorm(u) == 0.0407906
+                           Ubulk == 1.33333
+                           ubulk == 0.666667
+                            dPdx == -0.0040663
+                      Ubulk*h/nu == 1600
+                     Uparab*h/nu == 2400
+                             CFL == 0.0220104
+                    '''
+                    
+                    dict_per_case['t'] = []
+                    dict_per_case['L2Norm(u)'] = []
+                    dict_per_case['dissip(u+U)'] = []
+                    dict_per_case['CFL'] = []
+                    
+                    for k, line in enumerate(f):
+                        values = line.split()
+                        
+                        if len(values) == 0:
+                            print('Empty line')
+                            print('')
+                            
+                        else:
+                            
+                            if values[0] == 't':
+                                if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
+                                    dict_per_case['t'].append(float(values[2]))
+                    
+                            elif values[0] == 'L2Norm(u)':
+                                if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
+                                    dict_per_case['L2Norm(u)'].append(float(values[2]))
+                        
+                            elif values[0] == 'dissip(u+U)':
+                                if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
+                                    dict_per_case['dissip(u+U)'].append(float(values[2]))
+                    
+                            elif values[0] == 'CFL':
+                                if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
+                                    dict_per_case['CFL'].append(float(values[2]))
+                    
+                    ut.message('Closing file')
+                    f.close()
+                    
+                    dict_per_case['t']=np.asarray(dict_per_case['t'])
+                    dict_per_case['L2Norm(u)']=np.asarray(dict_per_case['L2Norm(u)'])
+                    dict_per_case['dissip(u+U)']=np.asarray(dict_per_case['dissip(u+U)'])
+                    dict_per_case['CFL']=np.asarray(dict_per_case['CFL'])
+                    var[tmp_dir] = dict_per_case
+                    
+           
+        
+        if makingMovie:
             
-                    elif values[0] == 'L2Norm(u)':
-                        if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
-                            dict_per_case['L2Norm(u)'].append(float(values[2]))
+            
+            # Now we are gonna go through and make subdirectories for each time step.
+            subdirecs = [d for d in os.listdir(pwd) if os.path.isdir(d)]
+            subdirecs = sorted(subdirecs)
+            
+            for j in range(0, len(subdirecs)):
                 
-                    elif values[0] == 'dissip(u+U)':
-                        if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
-                            dict_per_case['dissip(u+U)'].append(float(values[2]))
+                folder_string='data'
+                
+                if folder_string in str(subdirecs[j]):
+                    
+                    os.chdir(pwd + '/' + subdirecs[j])   
+                    subpwd = os.getcwd()
+        #            print(subpwd)
+                    files = [fi for fi in os.listdir(subpwd) if os.path.isfile(os.path.join(subpwd,fi))]
+                    files = sorted(os.listdir(subpwd), key=os.path.getctime)
             
-                    elif values[0] == 'CFL':
-                        if values[2] != '-nan' or values[2] != 'nan' or values[2] != 'done!':
-                            dict_per_case['CFL'].append(float(values[2]))
-            
-            ut.message('Closing file')
-            f.close()
-            
-            dict_per_case['t']=np.asarray(dict_per_case['t'])
-            dict_per_case['L2Norm(u)']=np.asarray(dict_per_case['L2Norm(u)'])
-            dict_per_case['dissip(u+U)']=np.asarray(dict_per_case['dissip(u+U)'])
-            dict_per_case['CFL']=np.asarray(dict_per_case['CFL'])
-            var[tmp_dir] = dict_per_case
-            
-       
+                    
+                    post_image_dir = pwd + '/images'
+                    if not os.path.exists(post_image_dir):
+                        os.mkdir(post_image_dir)
+                        
+                    
+                    
+                    for k in files:
+                        if str(k) != 'couette.args' and str(k)[0] == 'u' and str(k) != 'umean.asc':
+                            k = str(k)
+                            folderName = k[1:-3]
+                            
+                            bool_start_pt = isclose(t_start, float(folderName))
+                            bool_end_pt   = isclose(t_end,   float(folderName))
+                            bool_in_range = False
+                            if float(folderName) > t_start and float(folderName) < t_end:
+                                bool_in_range = True
+                            
+                            
+                            if bool_in_range or bool_start_pt or bool_end_pt:
+                            
+                                if float(folderName) in t_range:
+                                
+                                    iteration_time = folderName
+                                    folderName = folderName.zfill(8)
+                                    folderName = folderName.replace(".", "")
+                                    folderName = 'img'+folderName[:-2]
+                                    
+                                    
+                                    print('Made\n',Fore.BLACK + Back.CYAN + folderName + Style.RESET_ALL)
+                                    
+                                    ff_dir = subpwd + '/' + folderName
+                                    #if director does exist:
+                                    if os.path.exists(ff_dir):
+                                        sp.call(['rm', '-rf', ff_dir])
+                                    
+                                    #if directory doesn't exist:
+                                    if not os.path.exists(ff_dir):
+                                        os.mkdir(ff_dir)
+                                        ascOutput = folderName+'/'+folderName
+                                        
+                                        #### CONVERT 2 ASC
+                                        sp.call(['field2ascii', '-p', k, ascOutput]) # channelflow command line arguments
+                                        
+                                        
+                                        #### READ ASC
+                                        data = rc.main_read_construct(ff_dir, [0, 'all', 'all', 17], True)
+                                        data_per_case['flowField'] = data['flowField']
+                                        
+                                        #### CALCULATE FLUCTUATIONS
+                                        data_per_case['flowField']['physical'] = data['flowField']['physical'] - meanVec
+                                        
+                                        
+                                        #### CONVERT 2 DAT
+                                        if convertDAT:
+                                            ut.write_DAT_file_from_ff(data_per_case, subpwd, iteration_time, folderName[3:]+'_flucs')
+                                        
+                                        # Plotting
+                                        if outputPlots:
+                                            if data['flowField']['is_physical'] == True:
+                                                if os.path.exists(post_image_dir):
+                                                    up.plot2D(data['velslice'], post_image_dir, folderName, iteration_time)
+                                        
+                                    
+                                    # Delete the folder witht eh ASCII file and geom file.
+                                    sp.call(['rm', '-rf', ff_dir])
+                        
+                                    print('Deleted\n\n', folderName)
+                                
+                    text04='Done with the flow fields'
+                    print('\n',Fore.WHITE + Back.MAGENTA + text04 + Style.RESET_ALL,'\n')
+        
+                else: # We're now in images directory
+                    print(str(subdirecs[j]))
     
-    if makingMovie:
-        
-        
-        # Now we are gonna go through and make subdirectories for each time step.
-        subdirecs = [d for d in os.listdir(pwd) if os.path.isdir(d)]
-        subdirecs = sorted(subdirecs)
-        
-        for j in range(0, len(subdirecs)):
-            
-            folder_string='data'
-            
-            if folder_string in str(subdirecs[j]):
-                
-                os.chdir(pwd + '/' + subdirecs[j])   
-                subpwd = os.getcwd()
-    #            print(subpwd)
-                files = [fi for fi in os.listdir(subpwd) if os.path.isfile(os.path.join(subpwd,fi))]
-                files = sorted(os.listdir(subpwd), key=os.path.getctime)
-        
-                
-                post_image_dir = pwd + '/images'
-                if not os.path.exists(post_image_dir):
-                    os.mkdir(post_image_dir)
-            
-                for k in files:
-                    if str(k) != 'couette.args' and str(k)[0] == 'u':
-                        k = str(k)
-                        folderName = k[1:-3]
-                        
-                        bool_start_pt = isclose(t_start, float(folderName))
-                        bool_end_pt   = isclose(t_end,   float(folderName))
-                        bool_in_range = False
-                        if float(folderName) > t_start and float(folderName) < t_end:
-                            bool_in_range = True
-                        
-                        
-                        if bool_in_range or bool_start_pt or bool_end_pt:
-                        
-                            iteration_time = folderName
-                            folderName = folderName.zfill(8)
-                            folderName = folderName.replace(".", "")
-                            folderName = 'img'+folderName[:-2]
-                            
-                            
-                            print('Made\n\n',Fore.BLACK + Back.CYAN + folderName + Style.RESET_ALL)
-                            
-                            ff_dir = subpwd + '/' + folderName
-                            #if directory doesn't exist:
-                            if not os.path.exists(ff_dir):
-                                os.mkdir(ff_dir)
-                                ascOutput = folderName+'/'+folderName
-                                sp.call(['field2ascii', '-p', k, ascOutput]) # channelflow command line arguments
-                            
-                                
-                                # Read solution
-                                data = rc.main_read_construct(ff_dir, [0, 'all', 'all', 17])
-                                
-                                
-                                
-                                # Plotting
-                                if data['flowField']['is_physical'] == True:
-                                    if os.path.exists(post_image_dir):
-                                        up.plot2D(data['velslice'], post_image_dir, folderName, iteration_time)
-                                
-                            
-                            # Delete the folder witht eh ASCII file and geom file.
-                            sp.call(['rm', '-rf', ff_dir])
-                
-                            print('Deleted\n\n', folderName)
-                            
-                text04='Done with the flow fields'
-                print('\n',Fore.WHITE + Back.MAGENTA + text04 + Style.RESET_ALL,'\n')
-    
-            else: # We're now in images directory
-                print(str(subdirecs[j]))
 
-            
-
+    
+    
+    
     text01 = str(datetime.now() - startTimePerDir)
     print('\n',Fore.BLACK + Back.GREEN + text01 + Style.RESET_ALL,'\n')
 
 
 
-     
-# Now plot everything contained in the dictionary
-t=[]
-L2norm=[]
-dissip=[]
-cfl=[]
-     
-for key, value in var.items():
-    # Loop through each of the keys (cases)
-    t.append(var[key]['t'])
-    L2norm.append(var[key]['L2Norm(u)'])
-    dissip.append(var[key]['dissip(u+U)'])
-    cfl.append(var[key]['CFL'])
 
-num_plots = len(t)
 
-colormap = plt.cm.gist_ncar
-plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, num_plots)])
-#plt.figure()
 
-for i in range(len(t)):
-    plt.plot(t[i], L2norm[i])
-    plt.xlabel('Time units, t')
-    plt.ylabel('L2Norm(u)')
-    plt.grid(True)
-    plt.legend(legnd, loc='best')
-    plt.ylim([0.7,0.735])
-    plt.savefig(main_direc + '/convergence_L2norm.png')   # save the figure to file
+
+
+
+
+
+if convPlots:
+    # Now plot everything contained in the dictionary
+    t=[]
+    L2norm=[]
+    dissip=[]
+    cfl=[]
+         
+    for key, value in var.items():
+        # Loop through each of the keys (cases)
+        t.append(var[key]['t'])
+        L2norm.append(var[key]['L2Norm(u)'])
+        dissip.append(var[key]['dissip(u+U)'])
+        cfl.append(var[key]['CFL'])
+    
+    num_plots = len(t)
+    
+    colormap = plt.cm.gist_ncar
+    plt.gca().set_color_cycle([colormap(i) for i in np.linspace(0, 0.9, num_plots)])
+    #plt.figure()
+    
+    for i in range(len(t)):
+        plt.plot(t[i], L2norm[i])
+        plt.xlabel('Time units, t')
+        plt.ylabel('L2Norm(u)')
+        plt.grid(True)
+        plt.legend(legnd, loc='best')
+        plt.xlim([150,750])
+        plt.ylim([0.65,0.75])
+        plt.savefig(main_direc + '/convergence_L2norm.png')   # save the figure to file
+        
+        
+    for i in range(len(t)):
+        plt.plot(t[i], dissip[i])
+        plt.ylabel('dissip(u+U)')
+        plt.grid(True)
+        plt.legend(legnd, loc='best')
+        plt.xlim([400,710])
+        plt.ylim([2.0,3.0])
+        plt.savefig(main_direc + '/convergence_dissip.png')   # save the figure to file
     
     
-for i in range(len(t)):
-    plt.plot(t[i], dissip[i])
-    plt.ylabel('dissip(u+U)')
-    plt.grid(True)
-    plt.legend(legnd, loc='best')
-    plt.ylim([2.0,2.5])
-    plt.savefig(main_direc + '/convergence_dissip.png')   # save the figure to file
-
-
-#plt.legend(legnd, ncol=4, loc='upper center', 
-#           bbox_to_anchor=[0.5, 1.1], 
-#           columnspacing=1.0, labelspacing=0.0,
-#           handletextpad=0.0, handlelength=1.5,
-#           fancybox=True, shadow=True)
-#           
-#    
-#
-#
-#    if key != 't':
-#        color = tuple(np.random.rand(4))
-#        fig = plt.figure()
-#        plt.plot(var['t'], var[key], c=color)
-#        
-#        plt.grid(True)
-#        plt.xlabel('Time units, t')
-#        plt.ylabel(key)
-#        plt.legend(legnd, loc='best')
-#        plt.show()
-##        
-##        plt.savefig(main_direc + '/convergence_' + key + '.png')   # save the figure to file
-##        
-##        plt.close(fig)
+    #plt.legend(legnd, ncol=4, loc='upper center', 
+    #           bbox_to_anchor=[0.5, 1.1], 
+    #           columnspacing=1.0, labelspacing=0.0,
+    #           handletextpad=0.0, handlelength=1.5,
+    #           fancybox=True, shadow=True)
+    #           
+    #    
+    #
+    #
+    #    if key != 't':
+    #        color = tuple(np.random.rand(4))
+    #        fig = plt.figure()
+    #        plt.plot(var['t'], var[key], c=color)
+    #        
+    #        plt.grid(True)
+    #        plt.xlabel('Time units, t')
+    #        plt.ylabel(key)
+    #        plt.legend(legnd, loc='best')
+    #        plt.show()
+    ##        
+    ##        plt.savefig(main_direc + '/convergence_' + key + '.png')   # save the figure to file
+    ##        
+    ##        plt.close(fig)
 
     
 

@@ -175,7 +175,7 @@ def checkInputValidity(fourdarray, geom_variables):
     return
     
     
-def writeASCIIfile(data, directory):
+def write_ASCII_file(data, directory):
     
     """
     The data variable is a dictionary which has the generated flowField and 
@@ -220,31 +220,8 @@ def writeASCIIfile(data, directory):
     
     return 0
 
-
-def writeMeanASCIIfile(flowField, directory):
-    fileName = "/umean.asc"
     
-    file = open(directory + fileName, "w")
-    
-    for nx in range(0, flowField.shape[1]):
-        for ny in range(0, flowField.shape[2]):
-            for nz in range(0, flowField.shape[3]):
-                for nd in range(0, flowField.shape[0]):
-                    tmp = flowField[nd, nx, ny, nz]
-                    tmp = format(tmp, '.16f')
-                    file.write(tmp + "\n")
-                    
-    
-    file.close()
-    
-    print('Boom, the Mean ASCII is done.')
-    
-    return 0
-    
-    
-    
-    
-def writeGEOMfile(data, directory):
+def write_GEOM_file(data, directory):
     
     kx = data['kx']
     kz = data['kz']
@@ -281,6 +258,125 @@ def writeGEOMfile(data, directory):
     file.close()
     
     return 0
+    
+    
+    
+def write_DAT_file(data, directory):
+    
+    # Write a '.dat' file for the geometry info for Paraview
+    
+    flowField = data['resolvent_flowField']
+    
+    fileName = "/u0.dat"
+    
+    file = open(directory + fileName, "w")
+    
+    
+    title   = 'TITLE= "Initial flow field at Re = 1200"\n' 
+    columns = 'VARIABLES = "X", "Y", "Z", "U", "V", "W"\n'
+    zones   = 'ZONE I=' + str( int(data['Nx'])) + ', J=' + str( int(data['Ny']) ) + ', K=' + str( int(data['Nz']) ) + ', F=POINT\n'
+    
+    file.write(title)
+    file.write(columns)
+    file.write(zones)
+    
+    
+    for nx in range(0, data['Nx']):
+        for ny in range(0, data['Ny']):
+            for nz in range(0, data['Nz']):
+                string = format(data['X'][nx], '.8f') + ' '
+                string += format(data['Y'][ny], '.8f') + ' '
+                string += format(data['Z'][nz], '.8f') + ' '
+                string += format(flowField[0, nx, ny, nz], '.16f') + ' '
+                string += format(flowField[1, nx, ny, nz], '.16f') + ' '
+                string += format(flowField[2, nx, ny, nz], '.16f') + ' '
+                
+                file.write(string+'\n')
+
+    file.close()
+    
+    return 0
+    
+    
+def write_DAT_file_from_ff(data, directory, t, fileName):
+    
+    # Write a '.dat' file for the geometry info for Paraview
+    
+    flowField = data['flowField']['physical']
+    
+    fileName = '/u'+fileName+'.dat'
+    
+    file = open(directory + fileName, "w")
+    Nx = data['geometry']['physical']['Nx']
+    Ny = data['geometry']['physical']['Ny']
+    Nz = data['geometry']['physical']['Nz']
+    
+    Lx = data['geometry']['physical']['Lx']
+    Lz = data['geometry']['physical']['Lz']
+    
+    x = np.linspace(0.0, Lx, Nx)
+    z = np.linspace(-Lz/2.0, Lz/2.0, Nz)
+    y = np.linspace(-1.0,1.0,Ny)
+    for ny in range(0, Ny):
+        y[ny] = math.cos(ny*math.pi/(Ny-1))
+    
+    
+    title   = 'TITLE= "Flow field at t = ' + str(t) + '"\n' 
+    columns = 'VARIABLES = "X", "Y", "Z", "U", "V", "W"\n'
+    zones   = 'ZONE I=' + str( int(Nx)) + ', J=' + str( int(Ny) ) + ', K=' + str( int(Nz) ) + ', F=POINT\n'
+    
+    
+    file.write(title)
+    file.write(columns)
+    file.write(zones)
+    
+    for nx in range(0, Nx):
+        for ny in range(0, Ny):
+            for nz in range(0, Nz):
+                string = format(x[nx], '.8f') + ' '
+                string += format(y[ny], '.8f') + ' '
+                string += format(z[nz], '.8f') + ' '
+                string += format(flowField[0, nx, ny, nz], '.16f') + ' '
+                string += format(flowField[1, nx, ny, nz], '.16f') + ' '
+                string += format(flowField[2, nx, ny, nz], '.16f') + ' '
+                
+                file.write(string+'\n')
+
+    file.close()
+    
+    return 0    
+    
+    
+def writeMeanASCIIfile(flowField, directory):
+    fileName = "/umean.asc"
+    
+    file = open(directory + fileName, "w")
+    
+    for nx in range(0, flowField.shape[1]):
+        for ny in range(0, flowField.shape[2]):
+            for nz in range(0, flowField.shape[3]):
+                for nd in range(0, flowField.shape[0]):
+                    tmp = flowField[nd, nx, ny, nz]
+                    tmp = format(tmp, '.16f')
+                    string = str(nx) + '\t'
+                    string+= str(ny) + '\t'
+                    string+= str(nz) + '\t'
+                    string+= str(nd) + '\t'
+                    string+= tmp + '\n'
+                    
+                    file.write(string)
+                    
+    
+    file.close()
+    
+    print('Boom, the Mean ASCII is done.')
+    
+    return 0
+    
+    
+    
+
+    
     
     
 def makeSolutionDirectory(data, directory, n, re, kx, kz, c, amplitudes, i):

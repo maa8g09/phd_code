@@ -21,4 +21,4 @@ print('\nDone\n')
 
 
 
-convert -delay 20 *.png a.gif
+#convert -delay 20 *.png a.gif

@@ -25,7 +25,7 @@ import utils as ut
 import os
 
 
-def main_read_construct(directory, fourdarray):
+def main_read_construct(directory, fourdarray, readASC):
     """
     The main function that controls all reading and storing of flowfield. 
 
@@ -57,18 +57,20 @@ def main_read_construct(directory, fourdarray):
         ut.checkInputValidity(fourdarray, dict_geometry['physical'])
 
     # Read and construct flow field dictionary.
-    dict_flowField = read_construct_flow_field(directory, dict_files, dict_geometry)
+    if readASC:
+        dict_flowField = read_construct_flow_field(directory, dict_files, dict_geometry)
 
-    # We need to plot a plane according to the fourdarray, if physical solution
-    # is provided.
-    if dict_geometry['is_physical'] == True:
-        velslice = get_data_slice(dict_flowField['physical'], fourdarray, dict_geometry['physical'])
-        data['velslice'] = velslice
+        # We need to plot a plane according to the fourdarray, if physical solution
+        # is provided.
+        if dict_geometry['is_physical'] == True:
+            velslice = get_data_slice(dict_flowField['physical'], fourdarray, dict_geometry['physical'])
+            data['velslice'] = velslice
+        
+        data['flowField'] = dict_flowField
     
     # Store the geometry and flow field information in a master dictionary which 
     # can be passed to functions easily.
     data['geometry'] = dict_geometry
-    data['flowField'] = dict_flowField
     
     return data
 

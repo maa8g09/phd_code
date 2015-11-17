@@ -37,10 +37,10 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 
 main_directory = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_007_4modes_(-1.51191822883+0j)'
-case_directory = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_007_4modes_(-1.51191822883+0j)/data-skew'
-t_start = 0.0
+case_directory = main_directory + '/data-skew'
+t_start = 500.0
 t_end   = 999.0
-steps = 1000
+steps = 500
 t_range = np.linspace(t_start, t_end, steps)
 
 
@@ -50,6 +50,7 @@ os.chdir(case_directory)
 
 directories = [d for d in os.listdir(os.getcwd()) if os.path.isdir(d)]
 directories = sorted(directories)
+
 
 files = [fi for fi in os.listdir(case_directory) if os.path.isfile(os.path.join(case_directory,fi))]
 files = sorted(os.listdir(case_directory), key=os.path.getctime)
@@ -88,7 +89,7 @@ for k in files:
                 
                     
                     # Read solution
-                    data = rc.main_read_construct(ff_dir, [0, 'all', 'all', 17])
+                    data = rc.main_read_construct(ff_dir, [0, 'all', 'all', 17], True)
                     final_data = data
                     cumulative = np.zeros((data['geometry']['physical']['Nd'],
                                            data['geometry']['physical']['Nx'],
@@ -101,8 +102,8 @@ for k in files:
                 sp.call(['rm', '-rf', ff_dir])
                 
                 
-print('Now i\'ve collated all the data from', t_start, 'till', t_end)
-
+print('\nNow i\'ve collated all the data from', t_start, 'till', t_end,'\n')
+print('\nGonna calculate mean...\n')
 
 
 
@@ -117,7 +118,9 @@ magn = 1.0 / steps
 # Mean
 mean = cumulative * magn
 
+
 ut.writeMeanASCIIfile(mean, case_directory)
+print('\nWritten mean file.\n')
 
 
 post_image_dir = main_directory + '/images'
@@ -125,40 +128,31 @@ if not os.path.exists(post_image_dir):
     os.mkdir(post_image_dir)
 
 
-mean_slice = rc.get_data_slice(mean, [0, 'all', 'all', 17], final_data['geometry']['physical'])
+mean_slice = rc.get_data_slice(mean, [0, 0, 'all', 'all'], final_data['geometry']['physical'])
 if os.path.exists(post_image_dir):
     fileName = 'mean'
     up.plot2D(mean_slice, post_image_dir, fileName, '')
-        
-        
-        
-        
-        
-        
-
-for key, value in dict_inst.items():
-    dict_fluc[key] = dict_inst[key] - mean
     
 
+#for key, value in dict_inst.items():
+#    dict_fluc[key] = dict_inst[key] - mean
+#    
+#
 
     
 # Now we can plot the images
 # First we need a dictionary of vel_slices.
-
-dict_fluc_velSlices = {}
-for key, value in dict_inst.items():
-    ff = dict_fluc[key]
-    
-    fluc_slice = rc.get_data_slice(ff, [0, 0, 'all', 'all'], final_data['geometry']['physical'])
-    
-    if os.path.exists(post_image_dir):
-        key = key.zfill(8)
-        fileName = 'fluc_t_'+str(key)
-        up.plot2D(fluc_slice, post_image_dir, fileName, str(key))
-    
-    print('\nkey done:', str(key), '\n')
-    
-        
-        
-
+#
+#dict_fluc_velSlices = {}
+#for key, value in dict_inst.items():
+#    ff = dict_fluc[key]
+#    
+#    fluc_slice = rc.get_data_slice(ff, [0, 0, 'all', 'all'], final_data['geometry']['physical'])
+#    
+#    if os.path.exists(post_image_dir):
+#        key = key.zfill(8)
+#        fileName = 'fluc_t_'+str(key)
+#        up.plot2D(fluc_slice, post_image_dir, fileName, str(key))
+#    
+#    print('\nkey done:', str(key), '\n')
 

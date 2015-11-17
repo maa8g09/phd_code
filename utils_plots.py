@@ -182,9 +182,9 @@ def plot2D_modes(flowField, four_d_array, three_d):
         CS = plt.contourf(axis_x, 
                           axis_y, 
                           data_to_plot, 
-                          301, # levels
+                          102, # levels
                           # [-1, -0.1, 0, 0.1], #alpha=0.5,
-                          cmap=cm.seismic,
+                          cmap=cm.jet,
                           origin=origin)
         cbar = plt.colorbar(CS)
         cbar.ax.set_ylabel(cbar_t)

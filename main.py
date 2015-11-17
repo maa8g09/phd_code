@@ -86,9 +86,11 @@ def main(directory, fourdarray, geom, Re, kx, kz, c, A, i, output_directory, app
         directory = ut.makeSolutionDirectory(generated_flowField, directory, geom['m'], Re, kx, kz, c, A, i)
                 
         if outputPhysicalASC:
-            ut.writeASCIIfile(generated_flowField, directory)
-            ut.writeGEOMfile(generated_flowField, directory)
-
+            ut.write_ASCII_file(generated_flowField, directory)
+            ut.write_GEOM_file(generated_flowField, directory)
+            ut.write_DAT_file(generated_flowField, directory)
+            
+            
         
         if outputSpectralASC:
             directory = directory + '/spectral_construct'
