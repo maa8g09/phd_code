@@ -666,4 +666,40 @@ def makeOutputDictionary(generated_ff, geom, y_cheb, uniform, string_kx, string_
     
     
     return outputDic
+
+
+
+
+def convert2ff(direc):
+    os.chdir(direc)
+    os.system('ascii2field -p false -ge u0.geom u0.asc u0.ff')
+    return 0
+
+
+
+
+
+def writeSymmsFile(directory, fileName, N, symStrAry):
+    """
+    The FieldSymmetry uses ASCII input-output. The storage format is
+    s sx sy sz ax az
+    """
     
+    file = open(directory + '/' + fileName, "w")
+    
+    
+    if N == 1:
+        # simply write the sigma file
+        file.write(symStrAry[0])
+        
+    elif N > 1:
+        # Change format of file
+        header = '% ' + str(N) + '\n'
+        file.write(header)
+        for i in range(0, N):
+            string = symStrAry[i] + '\n'
+            file.write(string)
+    
+    file.close()
+    
+    return 0 

@@ -15,10 +15,13 @@ import sys
 
 
 
-convPlots = False
-makingMovie = True
+convPlots = True
+makingMovie = False
 outputPlots = False
-convertDAT = True
+convertDAT = False
+
+
+calculatedMean = False
 
 '''
 
@@ -89,9 +92,9 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 main_direc = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/'
 dns_output = 'data_skew.txt'
-t_start = 500.0
-t_end   = 550.0
-steps = 51
+t_start = 0.0
+t_end   = 500.0
+steps = 501
 t_range = np.linspace(t_start, t_end, steps)
 
 
@@ -111,6 +114,26 @@ var = {}
 data_per_case = {}
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 for i in range(0, len(directories)):
     startTimePerDir = datetime.now()
     
@@ -123,29 +146,29 @@ for i in range(0, len(directories)):
         print(pwd)
         
         
-        initialFF = rc.main_read_construct(pwd, [0,0,'all', 'all'], False)
-        
-        data_per_case = initialFF
-        
-        meanFile = ut.openFile(pwd + '/data-skew/umean.asc')
-        meanVec = np.zeros((initialFF['geometry']['physical']['Nd'],
-                            initialFF['geometry']['physical']['Nx'],
-                            initialFF['geometry']['physical']['Ny'],
-                            initialFF['geometry']['physical']['Nz']))
-        
-        for u, line in enumerate(meanFile):
-            values = line.split()
-            nx = int(values[0])
-            ny = int(values[1])
-            nz = int(values[2])
-            nd = int(values[3])
-            vel = float(values[4])
-            if vel <= 1e-8:
-                vel = 0.0
-            meanVec[nd, nx, ny, nz] = vel
-            
-        ut.message('Closing the physical ASCII file')
-        meanFile.close()
+#        initialFF = rc.main_read_construct(pwd, [0,0,'all', 'all'], False)
+#        
+#        data_per_case = initialFF
+#        
+#        meanFile = ut.openFile(pwd + '/data-skew/umean.asc')
+#        meanVec = np.zeros((initialFF['geometry']['physical']['Nd'],
+#                            initialFF['geometry']['physical']['Nx'],
+#                            initialFF['geometry']['physical']['Ny'],
+#                            initialFF['geometry']['physical']['Nz']))
+#        
+#        for u, line in enumerate(meanFile):
+#            values = line.split()
+#            nx = int(values[0])
+#            ny = int(values[1])
+#            nz = int(values[2])
+#            nd = int(values[3])
+#            vel = float(values[4])
+#            if vel <= 1e-8:
+#                vel = 0.0
+#            meanVec[nd, nx, ny, nz] = vel
+#            
+#        ut.message('Closing the physical ASCII file')
+#        meanFile.close()
         
         
         
@@ -369,21 +392,22 @@ if convPlots:
         plt.xlabel('Time units, t')
         plt.ylabel('L2Norm(u)')
         plt.grid(True)
-        plt.legend(legnd, loc='best')
-        plt.xlim([150,750])
-        plt.ylim([0.65,0.75])
-        plt.savefig(main_direc + '/convergence_L2norm.png')   # save the figure to file
-        
-        
-    for i in range(len(t)):
-        plt.plot(t[i], dissip[i])
-        plt.ylabel('dissip(u+U)')
-        plt.grid(True)
-        plt.legend(legnd, loc='best')
-        plt.xlim([400,710])
-        plt.ylim([2.0,3.0])
-        plt.savefig(main_direc + '/convergence_dissip.png')   # save the figure to file
+        plt.xlim([0,1000])
+        plt.ylim([0.68,0.74])
     
+    plt.legend(legnd, loc='best') 
+    plt.savefig(main_direc + '/convergence_L2norm.png')   # save the figure to file   
+    
+#    
+#    for i in range(len(t)):
+#        plt.plot(t[i], dissip[i])
+#        plt.ylabel('dissip(u+U)')
+#        plt.grid(True)
+#        plt.xlim([0,520])
+#        plt.ylim([0.0,20])
+#    
+#    plt.legend(legnd, loc='best')
+#    plt.savefig(main_direc + '/convergence_dissip.png')   # save the figure to file
     
     #plt.legend(legnd, ncol=4, loc='upper center', 
     #           bbox_to_anchor=[0.5, 1.1], 

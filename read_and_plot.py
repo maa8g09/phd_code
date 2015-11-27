@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import os
 import sys
@@ -24,21 +25,18 @@ def openFile(str):
     OUTPUTS:
            f:  file object
     """
-    
+
     f = open(str, 'r')
 #    message('Opened the file: ' + str)
     return f
-    
-    
-    
-    
-# Read in the file
-distance_file='/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_007_4modes_(-1.51191822883+0j)/seriesdist-output-500-999-2-2.asc'
 
-distance_file='/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_008_4modes_(-0.931112136502+0j)/seriesdist-output-500-999-2-2.asc'
+
+# Read in the file
+distance_file='/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_008_4modes_(-0.931112136502+0j)/seriesdist-output-500-999-8-8.asc'
+
+direct='/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_008_4modes_(-0.931112136502+0j)/'
 
 f=openFile(distance_file)
-
 
 data=[]
 
@@ -94,15 +92,20 @@ origin = 'lower'
 
 
 
+v = 7
+v = np.linspace(0.0, 0.0015, 7, endpoint=True)
 
-
-CS = plt.contourf(x, y, data_plot, 10, cmap=cm.jet, origin=origin)
+CS = plt.contourf(x, y, data_plot, v, cmap=cm.jet, origin=origin)
 cbar = plt.colorbar(CS)
-plt.xlabel('T')
-plt.ylabel('t_max')
+plt.xlabel('t')
+plt.ylabel('T')
 plt.title('L2norm( u(t)  -  u(t+T) )')
 plt.grid(True)
-plt.show
+
+plt.xlim([500,900])
+plt.ylim([0,60])
+
+plt.savefig(direct+'recurrancePlot.png')
 
 
 

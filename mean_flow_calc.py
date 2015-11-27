@@ -38,9 +38,9 @@ def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
 
 main_directory = '/home/arslan/Documents/work/channelflow-related/set01/Re1200/KB/ampls-DNS-2015_10_25-further/wavepacket_007_4modes_(-1.51191822883+0j)'
 case_directory = main_directory + '/data-skew'
-t_start = 500.0
+t_start = 600.0
 t_end   = 999.0
-steps = 500
+steps = 400
 t_range = np.linspace(t_start, t_end, steps)
 
 
