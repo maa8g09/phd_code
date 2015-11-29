@@ -2,7 +2,7 @@
 
 
 import numpy as np
-import main as m
+import main_resolvent as m
 import wavepackets as wp
 import dns_routine as dns
 from datetime import datetime
@@ -27,21 +27,21 @@ outputSpecASC       = False
 plotting            = False
 
 # Convert to Binary for DNS
-convert2ff          = True
+convert2ff          = False
 
 # Write symmetry file
-writeSymmFile       = True
+writeSymmFile       = False
 
 # Run DNS
-DNS                 = True
+DNS                 = False
 if DNS:
-    convert2ff = True
+    convert2ff = False
 
 # Check convergence
-checkConvergence    = True
+checkConvergence    = False
 runSeriesDist       = False
 if checkConvergence:
-    runSeriesDist = True
+    runSeriesDist = False
 
 
 """
@@ -66,9 +66,9 @@ elif linux:
     step = ''
 else:
     direct = ''
-    ampl_weights = np.logspace(0.0, -0.5, 3)
+    ampl_weights = np.logspace(1.0, -3.0, 5)
     #ampl_weights = np.logspace(-0.26, -0.47, 5)
-    ampl_weights = np.array([1e-1])
+    #ampl_weights = np.array([1e-1])
     date = time.strftime("%Y_%m_%d")
     step = '-DNS-' + str(date)
 
@@ -81,7 +81,7 @@ geom['Nd']=3; geom['Nx']=36; geom['Ny']=37; geom['Nz']=36
 
 # Reynolds number ___________________________________________________
 # based on centreline/wall velocity for channel/coutte flow
-Re = 1800
+Re = 3000
 
 # Wave number triplet________________________________________________
 # The mode combinations are taken from Sharma & McKeon (2013) paper
@@ -129,22 +129,6 @@ geom['t'] = 0
 geom['m'] = geom['Ny'] - 2
 
 
-
-
-
-
-
-
-
-
-
-# Change directory to the output directory
-os.chdir(main_direc)
-
-
-
-
-
 ####################################################################################################
 #### ROUTINE: Generate Initial Flow Field & Conver to BINARY
 ####################################################################################################
@@ -154,55 +138,37 @@ if generateInitialFF:
         m.main(direct, fdary, geom, Re, kx, kz, c, ampl, i, main_direc, approximate_soln, outputPhysASC, outputSpecASC, plotting)
 
 
-
-
-
-
-
-
-
+os.chdir(main_direc)
 
 
 # Now we are going to loop through the directory and list directories
 dirs = [d for d in os.listdir(main_direc) if os.path.isdir(d)]
 dirs = sorted(dirs)
-    
-    
-    
-    
+# now we loop thorugh all directories in main_direc and run the conver2ff method
+for i in range(0, len(dirs)):
+    case_direc = dirs[i]
 
-    # now we loop thorugh all directories in main_direc and run the conver2ff method
-    for i in range(0, len(dirs)):
-        case_direc = dirs[i]
-        
-        ####################################################################################################
-        #### ROUTINE: Convert to Binary
-        ####################################################################################################
-        if convert2ff:
-            ut.convert2ff(case_direc)
+    ####################################################################################################
+    #### ROUTINE: Convert to Binary
+    ####################################################################################################
+    if convert2ff:
+        ut.convert2ff(case_direc)
 
-        
-        ####################################################################################################
-        #### ROUTINE: Write symmetry file
-        ####################################################################################################
-        symData = {}
-        symData['fileName'] = 'sigma.asc'
-        symData['writtenSymmsFile'] = writeSymmFile
-        if writeSymmFile:
-            # symmetry file: s sx sy sz ax az
-            ut.writeSymmsFile(case_direc, symmsFileName, 1, ['1 1 1 1 0.5 0.0'])
-        
-        
-        ####################################################################################################
-        #### ROUTINE: DNS
-        ####################################################################################################        
-        if DNS:
-            dns.main(case_direc, Re, symData)
-        
+    ###################################################################################################
+    #### ROUTINE: Write symmetry file
+    ####################################################################################################
+    symData = {}
+    symData['fileName'] = 'sigma.asc'
+    symData['writtenSymmsFile'] = writeSymmFile
+    if writeSymmFile:
+    # symmetry file: s sx sy sz ax az
+        ut.writeSymmsFile(case_direc, symmsFileName, 1, ['1 1 1 1 0.5 0.0'])
 
+    ####################################################################################################
+    #### ROUTINE: DNS
+    ####################################################################################################        
+    if DNS:
+        dns.main(case_direc, Re, symData)
 
-
-
-
-
+print('\n    All donne!\n')
 print('   ', datetime.now() - startTimeLarge, '\n')

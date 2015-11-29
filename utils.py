@@ -24,6 +24,21 @@ from scipy.interpolate import interp1d
 verbose = False
 
 
+def printEdgeStatesStart():
+    print('=============================================================')
+    print('     ______    __              _____ __        __            ')
+    print('    / ____/___/ /___ ____     / ___// /_____ _/ /____  _____ ')
+    print('   / __/ / __  / __ `/ _ \    \__ \/ __/ __ `/ __/ _ \/ ___/ ')
+    print('  / /___/ /_/ / /_/ /  __/   ___/ / /_/ /_/ / /_/  __(__  )  ')
+    print(' /_____/\__,_/\__, /\___/   /____/\__/\__,_/\__/\___/____/   ')
+    print('             /____/                                          ')
+    print('')
+    print(' Muhammad Arslan Ahmed')
+    print(' University of Southampton')
+    print('=============================================================')
+    return 
+
+
 
 def printStart():
     
